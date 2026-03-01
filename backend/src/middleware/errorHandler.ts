@@ -14,7 +14,7 @@ export class AppError extends Error {
   }
 }
 
-export function errorHandler(err: any, req: Request, res: Response, next: NextFunction): void {
+export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction): void {
   logger.error('Error caught in errorHandler:', err);
 
   let statusCode = 500;
@@ -60,7 +60,7 @@ export function asyncHandler(
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 }
-export function notFoundHandler(req: Request, res: Response, next: NextFunction): void {
+export function notFoundHandler(req: Request, _res: Response, next: NextFunction): void {
   const error = new AppError(404, `API Route Not Found: ${req.originalUrl}`);
   next(error);
 }
