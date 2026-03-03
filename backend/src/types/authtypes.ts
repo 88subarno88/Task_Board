@@ -26,6 +26,6 @@ export interface TokenPair {
   refreshToken: string;
 }
 
-export interface RefreshTokenDto {
+export interface RefreshTokento {
   refreshToken: string;
 }

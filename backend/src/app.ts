@@ -5,6 +5,8 @@ import config from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import logger from './utils/logger';
 import authRoutes from './routes/authroutes';
+import userRoutes from './routes/userroutes';
+import projectRoutes from './routes/projectroutes';
 
 const app: Application = express();
 
@@ -40,6 +42,8 @@ app.get('/api', (_req: Request, res: Response) => {
   res.status(200).json({ message: 'Task Board API  is up and running' });
 });
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/projects', projectRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
