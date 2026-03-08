@@ -3,6 +3,7 @@ import { hashPassword, comparePasswords, validatePasswordStrength } from '../uti
 import { genAccessToken, genRefreshToken, validateRefreshToken } from '../utils/jwt';
 import { RegisterDto, LoginDto, AuthResponse, TokenPair } from '../types/authtypes';
 import { AppError } from '../middleware/errorHandler';
+import crypto from 'crypto';
 
 const SEVEN_DAYS_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -53,6 +54,7 @@ export const registerasUser = async (data: RegisterDto): Promise<AuthResponse> =
     userId: user.id,
     email: user.email,
     globalRole: user.globalRole,
+    jti: crypto.randomUUID(), //Fixed the bug
   };
 
   const accessToken = genAccessToken(tokenPayload);
@@ -91,6 +93,7 @@ export const loginasUser = async (data: LoginDto): Promise<AuthResponse> => {
     userId: user.id,
     email: user.email,
     globalRole: user.globalRole,
+    jti: crypto.randomUUID(), //Fixed the bug
   };
 
   const accessToken = genAccessToken(tokenPayload);
@@ -161,6 +164,7 @@ export const refreshUserToken = async (refreshTokenString: string): Promise<Toke
     userId: storedToken.user.id,
     email: storedToken.user.email,
     globalRole: storedToken.user.globalRole,
+    jti: crypto.randomUUID(), //Fixed the bug
   };
 
   const newAccessToken = genAccessToken(tokenPayload);
