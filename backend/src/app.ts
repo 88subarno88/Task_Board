@@ -8,6 +8,7 @@ import authRoutes from './routes/authroutes';
 import userRoutes from './routes/userroutes';
 import projectRoutes from './routes/projectroutes';
 import boardRoutes from './routes/boardroutes';
+import issueRoutes from './routes/issueroutes';
 
 const app: Application = express();
 
@@ -46,6 +47,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/boards', boardRoutes);
+app.use('/api/issues', issueRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
