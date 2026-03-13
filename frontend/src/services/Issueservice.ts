@@ -34,9 +34,11 @@ const issueService = {
     return data;
   },
 
-  async moveIssue(issueId: string, columnId: string) {
-    const { data } = await api.post(`/issues/${issueId}/move`, { columnId });
-    return data;
+  moveIssue: async (issueId: string, columnId: string) => {
+    const response = await api.patch(`/issues/${issueId}/move`, {
+      columnId,
+    });
+    return response.data;
   },
 
   async deleteIssue(issueId: string) {
