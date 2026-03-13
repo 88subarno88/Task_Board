@@ -15,7 +15,8 @@ export default function Projects() {
     try {
       setLoading(true);
       const data = await projectService.getMyProjects();
-      setProjects(data);
+      const projectsArray = Array.isArray(data) ? data : data.data;
+      setProjects(projectsArray || []);
     } catch (err) {
       setError("Failed to load projects. Please try again later.");
       console.error("Error fetching projects:", err);
@@ -66,8 +67,7 @@ export default function Projects() {
               onClick={() => navigate(`/projects/${project.id}`)}
               style={styles.card}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.boxShadow = styles.cardHover
-                  .boxShadow as string)
+                (e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)")
               }
               onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
             >

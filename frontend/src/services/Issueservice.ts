@@ -1,0 +1,48 @@
+import api from "./api";
+
+export interface CreateIssuePayload {
+  title: string;
+  description?: string;
+  boardId: string;
+  columnId?: string;
+}
+
+export interface UpdateIssuePayload extends Partial<CreateIssuePayload> {
+  // any specific  updates here
+}
+
+const issueService = {
+  async getIssuesByBoard(boardId: string) {
+    const { data } = await api.get("/issues", {
+      params: { boardId },
+    });
+    return data;
+  },
+
+  async getIssue(issueId: string) {
+    const { data } = await api.get(`/issues/${issueId}`);
+    return data;
+  },
+
+  async createIssue(payload: CreateIssuePayload) {
+    const { data } = await api.post("/issues", payload);
+    return data;
+  },
+
+  async updateIssue(issueId: string, payload: UpdateIssuePayload) {
+    const { data } = await api.put(`/issues/${issueId}`, payload);
+    return data;
+  },
+
+  async moveIssue(issueId: string, columnId: string) {
+    const { data } = await api.post(`/issues/${issueId}/move`, { columnId });
+    return data;
+  },
+
+  async deleteIssue(issueId: string) {
+    const { data } = await api.delete(`/issues/${issueId}`);
+    return data;
+  },
+};
+
+export default issueService;

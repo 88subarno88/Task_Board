@@ -1,87 +1,117 @@
-import React from "react";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import projectService from '../services/projectservices';
+import type{ Project } from '../types';
 
 export default function Home() {
-  const { user, logoutUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      const response = await projectService.getMyProjects();
+      setRecentProjects(response.data.slice(0, 3));
+    } catch (err: any) {
+      console.error('Failed to load projects:', err);
+      setError('Failed to load projects');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <h1>Task Board</h1>
+    <div style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <h1 style={{ marginBottom: '10px', fontSize: '28px' }}>
+        Welcome back, {user?.name}! 
+      </h1>
+      <p style={{ color: '#666', marginBottom: '40px', fontSize: '16px' }}>
+        Here's what's happening with your projects
+      </p>
 
-        <div style={styles.userSection}>
-          <span style={styles.greeting}>Welcome, {user?.name}!</span>
-          <button onClick={logoutUser} style={styles.logoutBtn}>
-            Logout
-          </button>
+      {error && (
+        <div style={{ color: '#dcd935ff', marginBottom: '20px', padding: '10px', backgroundColor: '#ffebee', borderRadius: '4px' }}>
+          {error}
         </div>
-      </header>
+      )}
 
-      <main style={styles.mainContent}>
-        <div style={styles.card}>
-          <h2>Ready to get to work?</h2>
-          <p style={styles.subtitle}>
-            Manage your tasks, boards, and team members all in one place.
-          </p>
-
+      <div style={{ marginBottom: '40px' }}>
+        <h2 style={{ fontSize: '18px', marginBottom: '15px' }}>Quick Actions</h2>
+        <div style={{ display: 'flex', gap: '15px' }}>
           <button
-            onClick={() => navigate("/projects")}
-            style={styles.primaryBtn}
+            onClick={() => navigate('/projects')}
+            style={{
+              padding: '15px 30px',
+              fontSize: '16px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
           >
-            View My Projects
+            View All Projects
           </button>
         </div>
-      </main>
+      </div>
+
+      <div>
+        <h2 style={{ fontSize: '18px', marginBottom: '15px' }}>Recent Projects</h2>
+        {loading ? (
+          <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>
+        ) : recentProjects.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            {recentProjects.map((project) => (
+              <div
+                key={project.id}
+                onClick={() => navigate(`/projects/${project.id}`)}
+                style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  cursor: 'pointer',
+                }}
+              >
+                <h3 style={{ marginBottom: '10px', fontSize: '18px' }}>{project.name}</h3>
+                {project.description && (
+                  <p style={{ color: '#666', fontSize: '14px', marginBottom: '15px' }}>
+                    {project.description}
+                  </p>
+                )}
+                <div style={{ fontSize: '12px', color: '#999' }}>
+                  {project.boardCount || 0} boards • {project.memberCount || 0} members
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#999', backgroundColor: 'white', borderRadius: '8px' }}>
+            <p style={{ marginBottom: '20px' }}>No projects yet. Create one to get started!</p>
+            <button
+              onClick={() => navigate('/projects')}
+              style={{
+                padding: '12px 24px',
+                fontSize: '14px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+              }}
+            >
+              Create Your First Project
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: { padding: "20px", maxWidth: "1200px", margin: "0 auto" },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "1px solid #eee",
-    paddingBottom: "20px",
-  },
-  userSection: { display: "flex", alignItems: "center", gap: "20px" },
-  greeting: { fontWeight: 500, color: "#333" },
-
-  logoutBtn: {
-    padding: "8px 16px",
-    border: "1px solid #dc3545",
-    backgroundColor: "transparent",
-    color: "#dc3545",
-    borderRadius: "4px",
-    cursor: "pointer",
-    transition: "all 0.2s",
-  },
-
-  mainContent: { marginTop: "50px", display: "flex", justifyContent: "center" },
-
-  card: {
-    textAlign: "center",
-    padding: "40px",
-    border: "1px solid #e0e0e0",
-    borderRadius: "8px",
-    backgroundColor: "#f8f9fa",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-  },
-  subtitle: { color: "#666", marginBottom: "30px", marginTop: "10px" },
-
-  primaryBtn: {
-    padding: "15px 30px",
-    fontSize: "16px",
-    fontWeight: "bold",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
-    transition: "background-color 0.2s",
-    boxShadow: "0 2px 4px rgba(0, 123, 255, 0.2)",
-  },
-};
