@@ -1,70 +1,127 @@
-import { useState } from 'react'
-import { login } from '../services/authservice'
+import { useState } from "react";
+import styles from "./cssmodules/login.module.css";
+import { login } from "../services/authservice";
 
-// TODO: add proper styling later
-// basic login page for now
-
-function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const res = await login({ email, password })
+      const res = await login({ email, password });
       if (res.success) {
-        localStorage.setItem('accessToken', res.data.accessToken)
-        window.location.href = '/dashboard'
+        localStorage.setItem("accessToken", res.data.accessToken);
+        window.location.href = "/dashboard";
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed')
+      setError(err.response?.data?.message || "Invalid email or password.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px' }}>
-      <h2>Login</h2>
+    <div className={styles.container}>
+      {/* ── Left: Branding ── */}
+      <div className={styles.brandPanel}>
+        <h2 className={styles.brandTitle}>
+          Plan work,
+          <br />
+          <em>track progress,</em>
+          <br />
+          ship together.
+        </h2>
+        <p className={styles.brandDescription}>
+          A Kanban-style project management tool built for teams — boards,
+          issues, workflows and collaboration in one place.
+        </p>
+      </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {/* ── Right: Form ── */}
+      <div className={styles.formPanel}>
+        <div className={styles.formContainer}>
+          <p className={styles.greeting}>Welcome back</p>
+          <h1 className={styles.heading}>Sign in</h1>
+          <p className={styles.subHeading}>
+            Enter your credentials to continue.
+          </p>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Email</label><br />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
+          {error && <div className={styles.errorBox}>{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div className={styles.inputGroup}>
+              <label className={styles.label} htmlFor="email">
+                Email address
+              </label>
+              <input
+                id="email"
+                className={styles.input}
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label} htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                className={styles.input}
+                type="password"
+                placeholder="••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              {/* Add this little helper text below the input */}
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  color: "#8b949e",
+                  marginTop: "4px",
+                  display: "block",
+                }}
+              >
+                Must be at least 10 characters with 1 uppercase, 1 lowercase,
+                and 1 number.
+              </span>
+            </div>
+
+            <div className={styles.row}>
+              <label className={styles.remember}>
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                Remember me
+              </label>
+              <a href="/forgot-password" className={styles.forgot}>
+                Forgot password?
+              </a>
+            </div>
+
+            <button type="submit" className={styles.button} disabled={loading}>
+              {loading ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+
+          <p className={styles.footer}>
+            No account yet? <a href="/register">Create one</a>
+          </p>
         </div>
-
-        <div style={{ marginBottom: '10px' }}>
-          <label>Password</label><br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: '100%', padding: '8px' }}
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-
-      <p>Don't have an account? <a href="/register">Register</a></p>
+      </div>
     </div>
-  )
+  );
 }
-
-export default Login

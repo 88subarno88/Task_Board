@@ -6,6 +6,7 @@ import Projects from "./pages/project";
 import ProjectDetail from "./pages/projectdetail";
 import BoardView from "./pages/board";
 import Home from "./pages/Home";
+import Layout from "./components/layout";
 
 // simple protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -13,7 +14,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) return <p>Loading...</p>;
   if (!user) return <Navigate to="/login" />;
-  return <>{children}</>;
+  return <Layout>{children}</Layout>;
 }
 
 function App() {
