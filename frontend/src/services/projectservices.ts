@@ -48,6 +48,10 @@ const projectService = {
     });
     return data;
   },
+  async searchUserByEmail(email: string) {
+    const { data } = await api.get(`/users/search?email=${email}`);
+    return data;
+  },
 };
 
 export default projectService;
