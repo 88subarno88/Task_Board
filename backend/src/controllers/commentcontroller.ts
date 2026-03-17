@@ -1,48 +1,48 @@
-import { Response } from 'express';
-import { AuthRequest } from '../types/commontypes';
-import * as commentService from '../services/commentservice';
-import { asyncHandler } from '../middleware/errorHandler';
+import { Request, Response } from 'express'
+import { asyncHandler } from '../middleware/errorHandler'
+import * as commentService from '../services/commentservice'
+
+interface AuthRequest extends Request {
+  user?: { userId: string; email: string; globalRole: string }
+}
 
 export const addComment = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.userId;
-  if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
+  const userId = req.user!.userId
+  const issueId = req.params.issueId as string
+  const { content } = req.body
 
-  const { content, issueId } = req.body;
-  if (!content || !issueId) {
-    res.status(400).json({ success: false, message: 'content and issueId are required' });
-    return;
+  if (!content) {
+    res.status(400).json({ success: false, message: 'Content is required' })
+    return
   }
 
-  const comment = await commentService.addComment(userId, { content, issueId });
-  res.status(201).json({ success: true, data: comment });
-});
+  const comment = await commentService.addComment(issueId, userId, content)
+  res.status(201).json({ success: true, data: comment, message: 'Comment added' })
+})
 
-export const getCommentsByIssue = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const comments = await commentService.getCommentsByIssue(req.params.issueId as string);
-  res.status(200).json({ success: true, data: comments });
-});
+export const getComments = asyncHandler(async (req: Request, res: Response) => {
+  const issueId = req.params.issueId as string
+  const comments = await commentService.getCommentsByIssue(issueId)
+  res.status(200).json({ success: true, data: comments })
+})
 
 export const updateComment = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.userId;
-  if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
+  const userId = req.user!.userId
+  const commentId = req.params.commentId as string
+  const { content } = req.body
 
-  if (!req.body.content) {
-    res.status(400).json({ success: false, message: 'content is required' });
-    return;
+  if (!content) {
+    res.status(400).json({ success: false, message: 'Content is required' })
+    return
   }
 
-  const comment = await commentService.updateComment(
-    req.params.commentId as string,
-    userId,
-    req.body
-  );
-  res.status(200).json({ success: true, data: comment });
-});
+  const comment = await commentService.updateComment(commentId, userId, content)
+  res.status(200).json({ success: true, data: comment, message: 'Comment updated' })
+})
 
 export const deleteComment = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.userId;
-  if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
-
-  await commentService.deleteComment(req.params.commentId as string, userId);
-  res.status(200).json({ success: true, message: 'Comment deleted' });
-});
+  const userId = req.user!.userId
+  const commentId = req.params.commentId as string
+  await commentService.deleteComment(commentId, userId)
+  res.status(200).json({ success: true, message: 'Comment deleted' })
+})
