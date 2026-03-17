@@ -50,7 +50,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/boards', boardRoutes);
 app.use('/api/issues', issueRoutes);
-app.use('/api/comments', commentRoutes);
+app.use('/api', commentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);

@@ -1,14 +1,12 @@
-import { Router } from 'express';
-import * as commentController from '../controllers/commentcontroller';
-import { authenticate } from '../middleware/auth';
+import { Router } from 'express'
+import { authenticate } from '../middleware/auth'
+import * as commentController from '../controllers/commentcontroller'
 
-const router = Router();
+const router = Router()
 
-router.use(authenticate);
+router.post('/issues/:issueId/comments', authenticate, commentController.addComment)
+router.get('/issues/:issueId/comments', authenticate, commentController.getComments)
+router.patch('/comments/:commentId', authenticate, commentController.updateComment)
+router.delete('/comments/:commentId', authenticate, commentController.deleteComment)
 
-router.post('/', commentController.addComment);
-router.get('/issue/:issueId', commentController.getCommentsByIssue);
-router.put('/:commentId', commentController.updateComment);
-router.delete('/:commentId', commentController.deleteComment);
-
-export default router;
+export default router

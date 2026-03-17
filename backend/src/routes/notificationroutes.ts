@@ -1,14 +1,12 @@
-import { Router } from 'express';
-import * as notificationController from '../controllers/notificationcontroller';
-import { authenticate } from '../middleware/auth';
+import { Router } from 'express'
+import { authenticate } from '../middleware/auth'
+import * as notificationController from '../controllers/notificationcontroller'
 
-const router = Router();
+const router = Router()
 
-router.use(authenticate);
+router.get('/', authenticate, notificationController.getMyNotifications)
+router.get('/unread-count', authenticate, notificationController.getUnreadCount)
+router.patch('/:notificationId/read', authenticate, notificationController.markAsRead)
+router.patch('/read-all', authenticate, notificationController.markAllAsRead)
 
-router.get('/', notificationController.getMyNotifications);
-router.get('/unread-count', notificationController.getUnreadCount);
-router.patch('/:notificationId/read', notificationController.markAsRead);
-router.patch('/mark-all-read', notificationController.markAllAsRead);
-
-export default router;
+export default router

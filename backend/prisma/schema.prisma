@@ -3,7 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum GlobalRole {
@@ -59,12 +61,12 @@ model RefreshToken {
 }
 
 model Project {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   description String?
-  archived    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   members ProjectMember[]
   boards  Board[]
