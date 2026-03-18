@@ -12,7 +12,6 @@ export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "light";
   });
@@ -22,7 +21,6 @@ export default function Layout({ children }: LayoutProps) {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
@@ -54,7 +52,28 @@ export default function Layout({ children }: LayoutProps) {
               {theme === "light" ? "🌙" : "☀️"}
             </button>
 
-            <div className={styles.userName}>{user?.name}</div>
+            <div
+              className={styles.userName}
+              onClick={() => navigate("/profile")}
+              style={{ cursor: "pointer" }}
+              title="View Profile"
+            >
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt="avatar"
+                  style={{
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    marginRight: "6px",
+                    verticalAlign: "middle",
+                  }}
+                />
+              ) : null}
+              {user?.name}
+            </div>
 
             <button className={styles.logoutBtn} onClick={logout}>
               Logout

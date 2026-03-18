@@ -7,6 +7,7 @@ import ProjectDetail from "./pages/projectdetail";
 import BoardView from "./pages/board";
 import Home from "./pages/Home";
 import Layout from "./components/layout";
+import Profile from "./pages/Profile";
 
 // simple protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <BoardView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />
