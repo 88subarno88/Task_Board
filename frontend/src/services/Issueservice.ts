@@ -3,8 +3,13 @@ import api from "./api";
 export interface CreateIssuePayload {
   title: string;
   description?: string;
+  type?: string;
+  priority?: string;
   boardId: string;
   columnId?: string;
+  assigneeId?: string;
+  dueDate?: string;
+  parentId?: string;
 }
 
 export interface UpdateIssuePayload extends Partial<CreateIssuePayload> {
@@ -16,6 +21,10 @@ const issueService = {
     const { data } = await api.get("/issues", {
       params: { boardId },
     });
+    return data;
+  },
+  async getIssueAuditLogs(issueId: string) {
+    const { data } = await api.get(`/issues/${issueId}/audit`);
     return data;
   },
 
@@ -45,6 +54,7 @@ const issueService = {
     const { data } = await api.delete(`/issues/${issueId}`);
     return data;
   },
+  
 };
 
 export default issueService;

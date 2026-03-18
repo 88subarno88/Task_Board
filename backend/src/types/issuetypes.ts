@@ -21,10 +21,11 @@ export interface UpdateIssueInput {
   priority?: Priority;
   assigneeId?: string;
   dueDate?: Date;
+  parentId?: string | null;
 }
-// moving an issue to a different column
 export interface MoveIssueInput {
   columnId: string;
+  dueDate?: string | Date | null;
 }
 //filtering issues
 export interface IssueFilterInput {

@@ -1,0 +1,226 @@
+.container {
+  padding: 2rem 4rem;
+  font-family:
+    "Sora",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: var(--text-primary);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.centerMessage {
+  padding: 50px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.backBtn {
+  cursor: pointer;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background-color: var(--border-color);
+}
+
+.boardTitle {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.errorText {
+  color: #cf3e3e;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.columnsWrapper {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  padding-bottom: 20px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.column {
+  width: 300px;
+  min-width: 300px;
+  background-color: var(--bg-main);
+  border-radius: 8px;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.2s ease;
+  box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.02);
+}
+
+.columnDragOver {
+  background-color: var(--card-shadow-hover);
+  border-color: var(--primary-btn);
+}
+
+.columnHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 0.5rem;
+}
+
+.columnTitle {
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.columnStats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.issueCount {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.addBtn {
+  padding: 0.1rem 0.5rem;
+  font-size: 1.2rem;
+  background-color: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.addBtn:hover {
+  background-color: var(--border-color);
+}
+
+.issueList {
+  min-height: 100px;
+}
+
+.issueCard {
+  background-color: var(--bg-panel);
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  border-left-width: 4px;
+  box-shadow: 0 1px 2px var(--card-shadow);
+  user-select: none;
+  cursor: grab;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+.issueCard:hover {
+  box-shadow: 0 4px 8px var(--card-shadow-hover);
+}
+
+.issueCard:active {
+  cursor: grabbing;
+}
+
+.issueType {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.issueTitle {
+  font-weight: 500;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.issueFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.assigneeTag {
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.unassignedTag {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.priorityTag {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.emptyColumn {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.overlayContent {
+  background-color: var(--bg-panel);
+  color: var(--text-primary);
+  padding: 1.5rem 2.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}

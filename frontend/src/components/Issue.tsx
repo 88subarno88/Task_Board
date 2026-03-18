@@ -1,9 +1,12 @@
-import { useState } from "react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+import { useState, useEffect } from "react";
 import issueService from "../services/Issueservice";
-
-
+import projectService from "../services/projectservices";
+import styles from "./cssmodules/issue.module.css";
 
 interface IssueFormProps {
+  projectId: string;
   boardId: string;
   columnId: string;
   onClose: () => void;
@@ -18,162 +21,110 @@ export default function IssueForm(props: IssueFormProps) {
     "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
   >("MEDIUM");
 
+  const [assigneeId, setAssigneeId] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [parentId, setParentId] = useState("");
+  const [availableStories, setAvailableStories] = useState<any[]>([]);
+  const [projectMembers, setProjectMembers] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const boardData = await issueService.getIssuesByBoard(props.boardId);
+        const stories = boardData.data.filter(
+          (issue: any) => issue.type === "STORY",
+        );
+        setAvailableStories(stories);
+
+        const projectData = await projectService.getProject(props.projectId);
+
+        // ADD THIS CONSOLE LOG:
+        console.log("🔍 PROJECT DATA FETCHED:", projectData);
+        const membersArray =
+          projectData.data?.members ||
+          projectData.data?.data?.members ||
+          projectData.members ||
+          [];
+
+        setProjectMembers(membersArray.map((m: any) => m.user || m));
+      } catch (err) {
+        console.error("Failed to load form data", err);
+      }
+    };
+    fetchData();
+  }, [props.boardId, props.projectId]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("submit button clicked!");
-
     setError("");
     setLoading(true);
 
     try {
-      let newIssueData = {
-        title: title,
-        description: description,
-        type: type,
-        priority: priority,
+      const newIssueData = {
+        title,
+        description,
+        type,
+        priority,
         boardId: props.boardId,
         columnId: props.columnId,
+        assigneeId: assigneeId || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        parentId:
+          (type === "TASK" || type === "BUG") && parentId
+            ? parentId
+            : undefined,
       };
 
-      console.log("sending this to backend:", newIssueData);
       await issueService.createIssue(newIssueData);
-
-      console.log("success");
       props.onSuccess();
     } catch (err: any) {
-      console.log("error creating issue:", err);
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Failed to create issue");
-      }
+      setError(err.response?.data?.message || "Failed to create issue");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-      }}
-      onClick={props.onClose}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "30px",
-          borderRadius: "8px",
-          width: "600px",
-          maxWidth: "90%",
-          maxHeight: "90vh",
-          overflowY: "auto",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2>Create Issue</h2>
+    <div className={styles.overlay} onClick={props.onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <h2 className={styles.heading}>Create Issue</h2>
 
-        {error !== "" && (
-          <div
-            style={{
-              color: "red",
-              marginBottom: "10px",
-              padding: "10px",
-              backgroundColor: "#ffebee",
-              borderRadius: "4px",
-            }}
-          >
-            {error}
-          </div>
-        )}
+        {error && <div className={styles.errorBox}>{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "15px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "500",
-              }}
-            >
-              Title *
-            </label>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Title *</label>
             <input
               type="text"
+              className={styles.input}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               placeholder="Enter issue title"
-              style={{
-                width: "100%",
-                padding: "10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-              }}
             />
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "500",
-              }}
-            >
-              Type *
-            </label>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Type *</label>
             <select
+              className={styles.input}
               value={type}
-              onChange={(e) =>
-                setType(e.target.value as "STORY" | "TASK" | "BUG")
-              }
-              style={{
-                width: "100%",
-                padding: "10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-              }}
+              onChange={(e) => setType(e.target.value as any)}
             >
               <option value="STORY">Story</option>
               <option value="TASK">Task</option>
               <option value="BUG">Bug</option>
             </select>
           </div>
-          <div style={{ marginBottom: "15px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "500",
-              }}
-            >
-              Priority
-            </label>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Priority</label>
             <select
+              className={styles.input}
               value={priority}
               onChange={(e) => setPriority(e.target.value as any)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-              }}
             >
               <option value="LOW">Low</option>
               <option value="MEDIUM">Medium</option>
@@ -182,63 +133,81 @@ export default function IssueForm(props: IssueFormProps) {
             </select>
           </div>
 
-          <div style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "5px",
-                fontWeight: "500",
-              }}
+          {(type === "TASK" || type === "BUG") && (
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Parent Story</label>
+              <select
+                className={styles.input}
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+              >
+                <option value="">No Parent (Independent)</option>
+                {availableStories.map((story) => (
+                  <option key={story.id} value={story.id}>
+                    {story.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Assignee</label>
+            <select
+              className={styles.input}
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
             >
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={6}
-              placeholder="Add a detailed description..."
-              style={{
-                width: "100%",
-                padding: "10px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                fontSize: "14px",
-                resize: "vertical",
-              }}
+              <option value="">Unassigned</option>
+              {projectMembers.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Due Date</label>
+            <input
+              type="date"
+              className={styles.input}
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
 
-          <div
-            style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}
-          >
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Description</label>
+            <div
+              style={{
+                backgroundColor: "#ffffff",
+                color: "#000000",
+                borderRadius: "4px",
+              }}
+            >
+              <ReactQuill
+                theme="snow"
+                value={description}
+                onChange={setDescription}
+                placeholder="Add a detailed description..."
+              />
+            </div>
+          </div>
+          <div className={styles.buttonGroup}>
             <button
               type="button"
+              className={styles.cancelBtn}
               onClick={props.onClose}
-              style={{
-                padding: "10px 20px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-                backgroundColor: "white",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}
             >
               Cancel
             </button>
             <button
               type="submit"
+              className={styles.submitBtn}
               disabled={loading}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontSize: "14px",
-              }}
             >
-              {loading === true ? "Creating..." : "Create Issue"}
+              {loading ? "Creating..." : "Create Issue"}
             </button>
           </div>
         </form>

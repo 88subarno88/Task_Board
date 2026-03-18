@@ -1,17 +1,23 @@
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
 import { useState, useEffect } from "react";
 import issueService from "../services/Issueservice";
 import commentService from "../services/commentservice";
+import projectService from "../services/projectservices";
 import type { Issue } from "../types/issues";
 import type { Comment } from "../types/comment";
 import { useAuth } from "../context/AuthContext";
+import styles from "./cssmodules/issuedetail.module.css";
 
 interface IssueDetailProps {
+  projectId: string;
   issueId: string;
   onClose: () => void;
   onUpdate: () => void;
 }
 
 export default function IssueDetail({
+  projectId,
   issueId,
   onClose,
   onUpdate,
@@ -19,45 +25,124 @@ export default function IssueDetail({
   const { user } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [projectMembers, setProjectMembers] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [addingComment, setAddingComment] = useState(false);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<any>({});
+  const [saving, setSaving] = useState(false);
+  const [availableStories, setAvailableStories] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<any[]>([]); // ADD THIS STATE
+
   useEffect(() => {
-    loadIssue();
-    loadComments();
+    loadMembers();
+    loadIssueData();
   }, [issueId]);
 
-  const loadIssue = async () => {
+  const loadMembers = async () => {
     try {
-      const response = await issueService.getIssue(issueId);
-      setIssue(response.data);
+      const res = await projectService.getProject(projectId);
+      const membersArray =
+        res.data?.members || res.data?.data?.members || res.members || [];
+      setProjectMembers(membersArray.map((m: any) => m.user || m));
     } catch (err) {
-      console.error("Failed to load issue:", err);
+      console.error("Failed to load members", err);
+    }
+  };
+
+  const loadIssueData = async () => {
+    try {
+      setLoading(true);
+
+      // 1. Fetch the issue first
+      const issueRes = await issueService.getIssue(issueId);
+      const currentIssue = issueRes.data;
+      setIssue(currentIssue);
+
+      // 2. Fetch everything else using currentIssue directly
+      // Corrected: Passing currentIssue.boardId as a string, not an object
+      const [commentsRes, auditRes, boardIssuesRes] = await Promise.all([
+        commentService.getComments(issueId),
+        issueService.getIssueAuditLogs(issueId),
+        issueService.getIssuesByBoard(currentIssue.boardId),
+      ]);
+
+      // 3. Filter stories for the parent dropdown
+      setAvailableStories(
+        boardIssuesRes.data.filter(
+          (i: any) => i.type === "STORY" && i.id !== issueId,
+        ),
+      );
+
+      // 4. Set the initial state for the Edit modal
+      setEditData({
+        title: currentIssue.title,
+        description: currentIssue.description || "",
+        priority: currentIssue.priority || "MEDIUM",
+        assigneeId: currentIssue.assignee?.id || null,
+        parentId: currentIssue.parentId || null,
+        dueDate: currentIssue.dueDate ? currentIssue.dueDate.split("T")[0] : "",
+      });
+
+      // 5. Build and sort the activity timeline
+      const combined = [
+        ...commentsRes.data.map((c: any) => ({ ...c, type: "COMMENT" })),
+        ...auditRes.data.map((a: any) => ({ ...a, type: "AUDIT" })),
+      ].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+
+      setTimeline(combined);
+    } catch (err) {
+      console.error("Failed to load issue data:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadComments = async () => {
+  const handleInlineUpdate = async (field: string, value: any) => {
     try {
-      const response = await commentService.getComments(issueId);
-      setComments(response.data);
-    } catch (err) {
-      console.error("Failed to load comments:", err);
+      // Send update to backend
+      await issueService.updateIssue(issueId, {
+        [field]: value === "" ? null : value,
+      });
+
+      // Refresh local data to show new Audit Log in timeline
+      await loadIssueData();
+
+      // Notify parent component to refresh the board
+      onUpdate();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to update " + field);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    setSaving(true);
+    try {
+      await issueService.updateIssue(issueId, editData);
+      setIsEditing(false);
+      await loadIssueData();
+      onUpdate();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to update issue");
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!newComment.trim()) return;
-
     setAddingComment(true);
     try {
       await commentService.addComment(issueId, newComment);
       setNewComment("");
-      loadComments();
+      await loadIssueData();
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to add comment");
     } finally {
@@ -67,20 +152,16 @@ export default function IssueDetail({
 
   const handleDeleteComment = async (commentId: string) => {
     if (!confirm("Delete this comment?")) return;
-
     try {
       await commentService.deleteComment(commentId);
-      loadComments();
+      await loadIssueData();
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to delete comment");
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this issue?")) {
-      return;
-    }
-
+    if (!confirm("Are you sure you want to delete this issue?")) return;
     try {
       await issueService.deleteIssue(issueId);
       onUpdate();
@@ -90,335 +171,318 @@ export default function IssueDetail({
     }
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-        }}
-        onClick={onClose}
-      >
-        <div
-          style={{
-            backgroundColor: "white",
-            padding: "40px",
-            borderRadius: "8px",
-          }}
-        >
-          Loading...
-        </div>
-      </div>
-    );
-  }
-
-  if (!issue) {
-    return null;
-  }
+  if (loading) return null;
+  if (!issue) return null;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: "20px",
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          borderRadius: "8px",
-          width: "800px",
-          maxWidth: "100%",
-          maxHeight: "90vh",
-          display: "flex",
-          flexDirection: "column",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div style={{ padding: "20px", borderBottom: "1px solid #eee" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "start",
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <div
-                style={{ fontSize: "12px", color: "#666", marginBottom: "5px" }}
-              >
-                {issue.type} • {issue.priority}
-              </div>
-              <h2 style={{ margin: 0, fontSize: "20px" }}>{issue.title}</h2>
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <div className={styles.metaTags}>
+              {issue.type} • {issue.status}
             </div>
-            <button
-              onClick={onClose}
-              style={{
-                background: "none",
-                border: "none",
-                fontSize: "24px",
-                cursor: "pointer",
-                color: "#666",
-                padding: "0 10px",
-              }}
-            >
+            {isEditing ? (
+              <input
+                type="text"
+                value={editData.title}
+                onChange={(e) =>
+                  setEditData({ ...editData, title: e.target.value })
+                }
+                className={styles.titleInput}
+              />
+            ) : (
+              <h2 className={styles.titleText}>{issue.title}</h2>
+            )}
+          </div>
+
+          <div className={styles.headerActions}>
+            {isEditing ? (
+              <>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className={styles.btnSecondary}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={saving}
+                  className={styles.btnPrimary}
+                >
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className={styles.btnSecondary}
+              >
+                Edit Issue
+              </button>
+            )}
+            <button onClick={onClose} className={styles.closeBtn}>
               ×
             </button>
           </div>
         </div>
-
         {/* Content - Scrollable */}
-        <div style={{ padding: "20px", overflowY: "auto", flex: 1 }}>
-          {/* Description */}
-          <div style={{ marginBottom: "20px" }}>
-            <h3
-              style={{
-                fontSize: "14px",
-                fontWeight: "600",
-                marginBottom: "10px",
-              }}
-            >
-              Description
-            </h3>
-            <p style={{ color: "#666", whiteSpace: "pre-wrap", margin: 0 }}>
-              {issue.description || "No description"}
-            </p>
-          </div>
-
-          {/* Meta info */}
-          <div style={{ marginBottom: "30px" }}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "15px",
-              }}
-            >
+        {/* Content - Scrollable */}
+        <div className={styles.contentScroll}>
+          <div className={styles.mainGrid}>
+            {/* LEFT: Description */}
+            <div>
+              <h3 className={styles.sectionTitle}>Description</h3>
+              {isEditing ? (
+                <textarea
+                  value={editData.description}
+                  onChange={(e) =>
+                    setEditData({ ...editData, description: e.target.value })
+                  }
+                  rows={6}
+                  className={styles.textArea}
+                />
+              ) : (
+                <p className={styles.descText}>
+                  {issue.description || (
+                    <span className={styles.emptyItalic}>
+                      No description provided.
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+            {/* RIGHT: Metadata Sidebar */}
+            <div className={styles.metaSidebar}>
+              {/* Assignee Selection */}
               <div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#999",
-                    marginBottom: "5px",
-                  }}
+                <div className={styles.metaLabel}>Assignee</div>
+                <select
+                  value={issue.assignee?.id || ""}
+                  onChange={(e) =>
+                    handleInlineUpdate("assigneeId", e.target.value)
+                  }
+                  className={styles.selectInput}
                 >
-                  Status
-                </div>
-                <div style={{ fontSize: "14px" }}>{issue.status}</div>
+                  <option value="">Unassigned</option>
+                  {projectMembers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Priority Selection */}
               <div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#999",
-                    marginBottom: "5px",
-                  }}
+                <div className={styles.metaLabel}>Priority</div>
+                <select
+                  value={issue.priority}
+                  onChange={(e) =>
+                    handleInlineUpdate("priority", e.target.value)
+                  }
+                  className={styles.selectInput}
                 >
-                  Reporter
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              </div>
+
+              {/* Hierarchy: Parent Story Selection */}
+              {issue.type !== "STORY" && (
+                <div>
+                  <div className={styles.metaLabel}>Parent Story</div>
+                  <select
+                    value={issue.parentId || ""}
+                    onChange={(e) =>
+                      handleInlineUpdate("parentId", e.target.value)
+                    }
+                    className={styles.selectInput}
+                  >
+                    <option value="">No Parent (Independent)</option>
+                    {availableStories.map((story) => (
+                      <option key={story.id} value={story.id}>
+                        {story.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <div style={{ fontSize: "14px" }}>
+              )}
+
+              {/* Due Date Operation */}
+              <div>
+                <div className={styles.metaLabel}>Due Date</div>
+                <input
+                  type="date"
+                  className={styles.selectInput}
+                  value={issue.dueDate ? issue.dueDate.split("T")[0] : ""}
+                  onChange={(e) =>
+                    handleInlineUpdate("dueDate", e.target.value)
+                  }
+                />
+              </div>
+
+              <div>
+                <div className={styles.metaLabel}>Reporter</div>
+                <div className={styles.metaValue}>
                   {issue.reporter?.name || "Unknown"}
                 </div>
               </div>
+
               <div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#999",
-                    marginBottom: "5px",
-                  }}
-                >
-                  Assignee
-                </div>
-                <div style={{ fontSize: "14px" }}>
-                  {issue.assignee?.name || "Unassigned"}
-                </div>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#999",
-                    marginBottom: "5px",
-                  }}
-                >
-                  Created
-                </div>
-                <div style={{ fontSize: "14px" }}>
+                <div className={styles.metaLabel}>Created</div>
+                <div className={styles.metaValue}>
                   {new Date(issue.createdAt).toLocaleDateString()}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Comments section */}
+            </div>{" "}
+            {/* Closes metaSidebar */}
+          </div>{" "}
+          {/* Closes mainGrid */}
+          <hr className={styles.divider} />
+          {/* Activity/Comments section */}
           <div>
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: "600",
-                marginBottom: "15px",
-              }}
-            >
-              Comments ({comments.length})
+            <h3 className={styles.sectionTitle}>
+              Activity Timeline (
+              {timeline.filter((t) => t.type === "COMMENT").length} Comments)
             </h3>
 
-            {/* Add comment form */}
-            <form onSubmit={handleAddComment} style={{ marginBottom: "20px" }}>
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                rows={3}
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                  resize: "vertical",
-                }}
-              />
+            <form onSubmit={handleAddComment} className={styles.commentForm}>
               <div
                 style={{
-                  marginTop: "10px",
-                  display: "flex",
-                  justifyContent: "flex-end",
+                  backgroundColor: "var(--bg-main)",
+                  color: "var(--text-primary)",
+                  marginBottom: "10px",
                 }}
               >
+                <ReactQuill
+                  theme="snow"
+                  value={newComment}
+                  onChange={setNewComment}
+                  placeholder="Add a rich text comment..."
+                />
+              </div>
+              <div className={styles.commentActions}>
                 <button
                   type="submit"
-                  disabled={addingComment || !newComment.trim()}
-                  style={{
-                    padding: "8px 16px",
-                    backgroundColor: "#007bff",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    cursor:
-                      addingComment || !newComment.trim()
-                        ? "not-allowed"
-                        : "pointer",
-                    fontSize: "14px",
-                  }}
+                  disabled={
+                    addingComment ||
+                    newComment.replace(/<[^>]*>/g, "").trim() === ""
+                  }
+                  className={styles.btnPrimary}
                 >
                   {addingComment ? "Adding..." : "Add Comment"}
                 </button>
               </div>
             </form>
 
-            {/* Comments list */}
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-            >
-              {comments.length === 0 ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "20px",
-                    color: "#999",
-                  }}
-                >
-                  No comments yet
-                </div>
+            <div className={styles.commentList}>
+              {timeline.length === 0 ? (
+                <div className={styles.emptyComments}>No activity yet</div>
               ) : (
-                comments.map((comment) => (
-                  <div
-                    key={comment.id}
-                    style={{
-                      border: "1px solid #eee",
-                      borderRadius: "4px",
-                      padding: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>
-                          {comment.user?.name || "Unknown"}
-                        </span>
+                timeline.map((item) => {
+                  if (item.type === "COMMENT") {
+                    return (
+                      <div
+                        key={`comment-${item.id}`}
+                        className={styles.commentBox}
+                      >
+                        <div className={styles.commentHeader}>
+                          <div>
+                            <span className={styles.commentAuthor}>
+                              {item.user?.name || "Unknown"}
+                            </span>
+                            <span className={styles.commentDate}>
+                              {new Date(item.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          {item.userId === user?.id && (
+                            <button
+                              onClick={() => handleDeleteComment(item.id)}
+                              className={styles.btnDangerText}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                        <div
+                          className={styles.commentBody}
+                          dangerouslySetInnerHTML={{ __html: item.content }}
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (item.type === "AUDIT") {
+                    let actionText = "";
+                    if (item.action === "STATUS_CHANGED") {
+                      actionText = `moved this issue from ${item.oldValue} to ${item.newValue}`;
+                    } else if (item.action === "ASSIGNEE_CHANGED") {
+                      const oldName =
+                        projectMembers.find((m) => m.id === item.oldValue)
+                          ?.name || "Unassigned";
+                      const newName =
+                        projectMembers.find((m) => m.id === item.newValue)
+                          ?.name || "Unassigned";
+                      actionText = `changed assignee from ${oldName} to ${newName}`;
+                    } else if (item.action === "PRIORITY_CHANGED") {
+                      actionText = `changed priority from ${item.oldValue} to ${item.newValue}`;
+                    }
+
+                    return (
+                      <div
+                        key={`audit-${item.id}`}
+                        style={{
+                          padding: "8px 12px",
+                          backgroundColor: "var(--bg-main)",
+                          borderRadius: "6px",
+                          fontSize: "0.85rem",
+                          color: "var(--text-secondary)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          marginBottom: "8px",
+                        }}
+                      >
                         <span
                           style={{
-                            color: "#999",
-                            fontSize: "12px",
-                            marginLeft: "10px",
+                            fontWeight: 600,
+                            color: "var(--text-primary)",
                           }}
                         >
-                          {new Date(comment.createdAt).toLocaleString()}
+                          {item.user?.name || "Someone"}
+                        </span>
+                        <span>{actionText}</span>
+                        <span
+                          style={{
+                            fontSize: "0.75rem",
+                            opacity: 0.7,
+                            marginLeft: "auto",
+                          }}
+                        >
+                          {new Date(item.createdAt).toLocaleString()}
                         </span>
                       </div>
-                      {comment.userId === user?.id && (
-                        <button
-                          onClick={() => handleDeleteComment(comment.id)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#dc3545",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </div>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "14px",
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {comment.content}
-                    </p>
-                  </div>
-                ))
+                    );
+                  }
+                  return null;
+                })
               )}
             </div>
           </div>
-        </div>
-
-        <div style={{ borderTop: "1px solid #eee", padding: "20px" }}>
-          <button
-            onClick={handleDelete}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#dc3545",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
+        </div>{" "}
+        {/* Closes contentScroll */}
+        {/* Footer */}
+        <div className={styles.footer}>
+          <button onClick={handleDelete} className={styles.btnDangerOutline}>
             Delete Issue
           </button>
         </div>
-      </div>
-    </div>
+      </div>{" "}
+      {/* Closes modal */}
+    </div> // Closes overlay
   );
 }

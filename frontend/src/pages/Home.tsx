@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import projectService from "../services/projectservices";
 import type { Project } from "../types";
-import styles from "./cssmodules/home.module.css"; // <-- Import the new styles
+import styles from "./cssmodules/home.module.css"; 
 
 export default function Home() {
   const { user } = useAuth();
@@ -30,7 +30,6 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
       <div className={styles.header}>
         <h1 className={styles.greeting}>
           Welcome back, {user?.name || "there"}!
@@ -40,10 +39,8 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Error State */}
       {error && <div className={styles.errorBox}>{error}</div>}
 
-      {/* Quick Actions */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Quick Actions</h2>
         <div>
@@ -56,7 +53,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Recent Projects */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Recent Projects</h2>
 

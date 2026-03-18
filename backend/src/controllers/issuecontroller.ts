@@ -5,11 +5,16 @@ import { asyncHandler } from '../middleware/errorHandler';
 
 export const createIssue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.userId;
-  if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
+  if (!userId) {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+    return;
+  }
 
   const { title, type, boardId, columnId } = req.body;
   if (!title || !type || !boardId || !columnId) {
-    res.status(400).json({ success: false, message: 'title, type, boardId and columnId are required' });
+    res
+      .status(400)
+      .json({ success: false, message: 'title, type, boardId and columnId are required' });
     return;
   }
 
@@ -37,7 +42,10 @@ export const getIssueById = asyncHandler(async (req: AuthRequest, res: Response)
 
 export const updateIssue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.userId;
-  if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
+  if (!userId) {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+    return;
+  }
 
   const issue = await issueService.updateIssue(req.params.issueId as string, userId, req.body);
   res.status(200).json({ success: true, data: issue });
@@ -45,7 +53,10 @@ export const updateIssue = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const moveIssue = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user?.userId;
-  if (!userId) { res.status(401).json({ success: false, message: 'Unauthorized' }); return; }
+  if (!userId) {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+    return;
+  }
 
   if (!req.body.columnId) {
     res.status(400).json({ success: false, message: 'columnId is required' });
@@ -59,4 +70,9 @@ export const moveIssue = asyncHandler(async (req: AuthRequest, res: Response) =>
 export const deleteIssue = asyncHandler(async (req: AuthRequest, res: Response) => {
   await issueService.deleteIssue(req.params.issueId as string);
   res.status(200).json({ success: true, message: 'Issue deleted' });
+});
+
+export const getIssueAuditLogs = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const logs = await issueService.getIssueAuditLogs(req.params.issueId as string);
+  res.status(200).json({ success: true, data: logs });
 });

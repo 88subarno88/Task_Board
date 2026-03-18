@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { register } from "../services/authservice";
 import { useNavigate, Link } from "react-router-dom";
+import styles from "./cssmodules/login.module.css"; 
 
-function Register() {
+export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,13 +16,25 @@ function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+
+    // Custom Validation
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+ 
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+
+    if (!passwordRegex.test(password)) {
+      setError(
+        "Password must be at least 10 characters and contain at least one uppercase letter, one lowercase letter, and one number.",
+      );
       return;
     }
 
@@ -29,81 +42,130 @@ function Register() {
     try {
       const res = await register({ name, email, password });
       if (res.success) {
-        // redirect to login after register
+        // redirect to login after successful registration
         navigate("/login");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed");
+      setError(
+        err.response?.data?.message || "Registration failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "80px auto", padding: "20px" }}>
-      <h2>Create Account</h2>
+    <div className={styles.container}>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Name</label>
+      <div className={styles.brandPanel}>
+        <h2 className={styles.brandTitle}>
+          Start planning,
           <br />
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Email</label>
+          <em>stay organized,</em>
           <br />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
+          build together.
+        </h2>
+        <p className={styles.brandDescription}>
+          Join Task Board today. A Kanban-style project management tool built
+          for teams — boards, issues, workflows, and collaboration in one place.
+        </p>
+      </div>
+
+  
+      <div className={styles.formPanel}>
+        <div className={styles.formContainer}>
+          <p className={styles.greeting}>Start your journey</p>
+          <h1 className={styles.heading}>Create Account</h1>
+          <p className={styles.subHeading}>
+            Sign up to get started with Task Board.
+          </p>
+
+          {error && <div className={styles.errorBox}>{error}</div>}
+
+        
+          <form onSubmit={handleSubmit} noValidate>
+            <div className={styles.inputGroup}>
+              <label className={styles.label} htmlFor="name">
+                Full Name
+              </label>
+              <input
+                id="name"
+                className={styles.input}
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label} htmlFor="email">
+                Email address
+              </label>
+              <input
+                id="email"
+                className={styles.input}
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label} htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                className={styles.input}
+                type="password"
+                placeholder="••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+             
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--text-secondary)",
+                  marginTop: "6px",
+                  display: "block",
+                }}
+              >
+                Must be at least 10 characters with 1 uppercase, 1 lowercase,
+                and 1 number.
+              </span>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label} htmlFor="confirmPassword">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                className={styles.input}
+                type="password"
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className={styles.button} disabled={loading}>
+              {loading ? "Creating account…" : "Register"}
+            </button>
+          </form>
+
+          <p className={styles.footer}>
+            Already have an account? <Link to="/login">Sign in here</Link>
+          </p>
         </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Password</label>
-          <br />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Confirm Password</label>
-          <br />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            style={{ width: "100%", padding: "8px" }}
-          />
-        </div>
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Creating account..." : "Register"}
-        </button>
-      </form>
-
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
+      </div>
     </div>
   );
 }
-
-export default Register;

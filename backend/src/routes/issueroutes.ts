@@ -13,5 +13,6 @@ router.get('/:issueId', issueController.getIssueById);
 router.put('/:issueId', issueController.updateIssue);
 router.patch('/:issueId/move', issueController.moveIssue);
 router.delete('/:issueId', issueController.deleteIssue);
+router.get('/:issueId/audit', issueController.getIssueAuditLogs);
 
 export default router;

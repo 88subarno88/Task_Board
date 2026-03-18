@@ -106,7 +106,7 @@ export default function ProjectDetail() {
       />
     )}
 
-    {/* Boards Section */}
+   
     <div>
       <h2>Boards</h2>
       {boards.length === 0 ? (
@@ -127,7 +127,7 @@ export default function ProjectDetail() {
       )}
     </div>
 
-    {/* Members Section */}
+ 
     <div style={{ marginTop: '30px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Members</h2>

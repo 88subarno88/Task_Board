@@ -29,7 +29,6 @@ export default function Login() {
 
   return (
     <div className={styles.container}>
-      {/* ── Left: Branding ── */}
       <div className={styles.brandPanel}>
         <h2 className={styles.brandTitle}>
           Plan work,
@@ -44,7 +43,6 @@ export default function Login() {
         </p>
       </div>
 
-      {/* ── Right: Form ── */}
       <div className={styles.formPanel}>
         <div className={styles.formContainer}>
           <p className={styles.greeting}>Welcome back</p>
@@ -84,7 +82,6 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              {/* Add this little helper text below the input */}
               <span
                 style={{
                   fontSize: "0.75rem",

@@ -4,6 +4,7 @@ import boardService from "../services/boardservices";
 import issueService from "../services/Issueservice";
 import IssueForm from "../components/Issue";
 import IssueDetail from "../components/issuedetail";
+import styles from "./cssmodules/board.module.css"; 
 
 type Issue = {
   id: string;
@@ -24,6 +25,7 @@ type Column = {
 type BoardData = {
   id: string;
   name: string;
+  projectId: string;
   columns: Column[];
 };
 
@@ -62,15 +64,15 @@ export default function BoardView() {
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case "CRITICAL":
-        return "#dc3545";
+        return "#dc3545"; 
       case "HIGH":
-        return "#fd7e14";
+        return "#fd7e14"; 
       case "MEDIUM":
-        return "#ffc107";
+        return "#ffc107"; 
       case "LOW":
-        return "#28a745";
+        return "#28a745"; 
       default:
-        return "#6c757d";
+        return "#6c757d"; 
     }
   };
 
@@ -86,6 +88,7 @@ export default function BoardView() {
         return "•";
     }
   };
+
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
     issue: Issue,
@@ -123,29 +126,25 @@ export default function BoardView() {
       return;
     }
 
-    let targetColumn = undefined;
-    if (board && board.columns) {
-      targetColumn = board.columns.find((c) => c.id === columnId);
-    }
+    let targetColumn = board?.columns?.find((c) => c.id === columnId);
 
-    if (targetColumn) {
-      if (
-        targetColumn.wipLimit !== null &&
-        targetColumn.wipLimit !== undefined
-      ) {
-        let issuesInColumn = 0;
-        if (targetColumn.issues) {
-          issuesInColumn = targetColumn.issues.length;
-        }
-        if (issuesInColumn >= targetColumn.wipLimit) {
-          alert(
-            `Cannot move: ${targetColumn.name} has reached its WIP limit of ${targetColumn.wipLimit}`,
-          );
-          setDraggedIssue(null);
-          return;
-        }
+    if (
+      targetColumn &&
+      targetColumn.wipLimit !== null &&
+      targetColumn.wipLimit !== undefined
+    ) {
+      const issuesInColumn = targetColumn.issues
+        ? targetColumn.issues.length
+        : 0;
+      if (issuesInColumn >= targetColumn.wipLimit) {
+        alert(
+          `Cannot move: ${targetColumn.name} has reached its WIP limit of ${targetColumn.wipLimit}`,
+        );
+        setDraggedIssue(null);
+        return;
       }
     }
+
     setMovingIssue(true);
     try {
       await issueService.moveIssue(draggedIssue.id, columnId);
@@ -158,53 +157,29 @@ export default function BoardView() {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ padding: "50px", textAlign: "center" }}>Loading...</div>
-    );
-  }
+  if (loading) return <div className={styles.centerMessage}>Loading...</div>;
 
-  if (error) {
+  if (error || !board) {
     return (
-      <div style={{ padding: "20px" }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{ cursor: "pointer", marginBottom: "20px" }}
-        >
+      <div className={styles.container}>
+        <button onClick={() => navigate(-1)} className={styles.backBtn}>
           ← Go Back
         </button>
-        <div style={{ color: "red", fontWeight: "bold" }}>{error}</div>
+        <div className={styles.errorText}>{error || "Board not found!"}</div>
       </div>
     );
-  }
-
-  if (!board) {
-    return <div style={{ padding: "20px" }}>Board not found!</div>;
   }
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <div style={{ marginBottom: "20px" }}>
-        <button
-          onClick={() => navigate(-1)}
-          style={{ cursor: "pointer", marginBottom: "10px" }}
-        >
-          Go Back
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <button onClick={() => navigate(-1)} className={styles.backBtn}>
+          ← Go Back
         </button>
-        <h1 style={{ margin: 0 }}>{board.name}</h1>
+        <h1 className={styles.boardTitle}>{board.name}</h1>
       </div>
 
-      {error && <div style={{ color: "red" }}>{error}</div>}
-
-      <div
-        style={{
-          display: "flex",
-          gap: "15px",
-          overflowX: "scroll",
-          paddingBottom: "20px",
-          alignItems: "flex-start",
-        }}
-      >
+      <div className={styles.columnsWrapper}>
         {board.columns &&
           board.columns.map((column) => (
             <div
@@ -212,54 +187,18 @@ export default function BoardView() {
               onDragOver={(e) => handleDragOver(e, column.id)}
               onDragLeave={() => setDragOverColumn(null)}
               onDrop={(e) => handleDrop(e, column.id)}
-              style={{
-                width: "280px",
-                minWidth: "280px",
-                background:
-                  dragOverColumn === column.id ? "#e3f2fd" : "#ebecf0",
-                borderRadius: "5px",
-                padding: "10px",
-                transition: "background-color 0.2s",
-              }}
+              className={`${styles.column} ${dragOverColumn === column.id ? styles.columnDragOver : ""}`}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "10px",
-                }}
-              >
-                <b style={{ textTransform: "uppercase", fontSize: "13px" }}>
-                  {column.name}
-                </b>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
-                >
-                  <span>{column.issues ? column.issues.length : 0}</span>
-
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#666",
-                      fontWeight: "bold",
-                    }}
-                  >
+              <div className={styles.columnHeader}>
+                <span className={styles.columnTitle}>{column.name}</span>
+                <div className={styles.columnStats}>
+                  <span className={styles.issueCount}>
                     {column.issues ? column.issues.length : 0}
-                    {column.wipLimit !== null && column.wipLimit !== undefined
-                      ? ` / ${column.wipLimit}`
-                      : ""}
+                    {column.wipLimit != null ? ` / ${column.wipLimit}` : ""}
                   </span>
                   <button
                     onClick={() => setShowCreateIssue(column.id)}
-                    style={{
-                      padding: "2px 8px",
-                      fontSize: "16px",
-                      backgroundColor: "white",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
+                    className={styles.addBtn}
                     title="Add issue"
                   >
                     +
@@ -267,7 +206,7 @@ export default function BoardView() {
                 </div>
               </div>
 
-              <div style={{ minHeight: "100px" }}>
+              <div className={styles.issueList}>
                 {column.issues && column.issues.length > 0 ? (
                   column.issues.map((issue) => (
                     <div
@@ -275,100 +214,50 @@ export default function BoardView() {
                       draggable
                       onDragStart={(e) => handleDragStart(e, issue, column.id)}
                       onDragEnd={handleDragEnd}
-                      onClick={(e) => {
-                        if (draggedIssue === null) {
-                          setSelectedIssue(issue.id);
-                        }
+                      onClick={() => {
+                        if (draggedIssue === null) setSelectedIssue(issue.id);
                       }}
+                      className={styles.issueCard}
                       style={{
-                        background: "white",
-                        padding: "12px",
-                        marginBottom: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                        borderLeft: `4px solid ${getPriorityColor(issue.priority)}`,
-                        boxShadow: "0 1px 0 rgba(9,30,66,.25)",
-                        userSelect: "none",
-                        cursor: "pointer",
-                      }}
+                        borderLeftColor: getPriorityColor(issue.priority),
+                      }} 
                     >
-        
-                      <div
-                        style={{
-                          fontSize: "12px",
-                          color: "#666",
-                          marginBottom: "5px",
-                        }}
-                      >
+                      <div className={styles.issueType}>
                         {getTypeIcon(issue.type)} {issue.type || "TASK"}
                       </div>
 
-                   
-                      <div
-                        style={{
-                          fontWeight: "500",
-                          marginBottom: "8px",
-                          fontSize: "14px",
-                        }}
-                      >
-                        {issue.title}
-                      </div>
+                      <div className={styles.issueTitle}>{issue.title}</div>
 
-               
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
+                      <div className={styles.issueFooter}>
                         {issue.assignee ? (
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#666",
-                              backgroundColor: "#f0f0f0",
-                              padding: "2px 6px",
-                              borderRadius: "3px",
-                            }}
-                          >
+                          <span className={styles.assigneeTag}>
                             {issue.assignee.name}
-                          </div>
+                          </span>
                         ) : (
-                          <div style={{ fontSize: "11px", color: "#999" }}>
+                          <span className={styles.unassignedTag}>
                             Unassigned
-                          </div>
+                          </span>
                         )}
-                        <div
-                          style={{
-                            fontSize: "11px",
-                            color: getPriorityColor(issue.priority),
-                            fontWeight: "600",
-                          }}
+                        <span
+                          className={styles.priorityTag}
+                          style={{ color: getPriorityColor(issue.priority) }}
                         >
                           {issue.priority || "MEDIUM"}
-                        </div>
+                        </span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div
-                    style={{
-                      color: "#5e6c84",
-                      fontSize: "12px",
-                      textAlign: "center",
-                      padding: "10px",
-                    }}
-                  >
-                    No issues here
-                  </div>
+                  <div className={styles.emptyColumn}>No issues here</div>
                 )}
               </div>
             </div>
           ))}
       </div>
+
       {showCreateIssue !== null && boardId !== undefined && (
         <IssueForm
+          projectId={board.projectId}
           boardId={boardId}
           columnId={showCreateIssue}
           onClose={() => setShowCreateIssue(null)}
@@ -378,9 +267,12 @@ export default function BoardView() {
           }}
         />
       )}
-      {selectedIssue !== null && (
+
+      {selectedIssue !== null && boardId !== undefined && (
         <IssueDetail
+          projectId={board.projectId} 
           issueId={selectedIssue}
+         
           onClose={() => setSelectedIssue(null)}
           onUpdate={() => {
             setSelectedIssue(null);
@@ -388,30 +280,10 @@ export default function BoardView() {
           }}
         />
       )}
-      {movingIssue === true && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.3)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 999,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-            }}
-          >
-            Moving issue...
-          </div>
+
+      {movingIssue && (
+        <div className={styles.overlay}>
+          <div className={styles.overlayContent}>Moving issue...</div>
         </div>
       )}
     </div>
