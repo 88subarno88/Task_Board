@@ -1,5 +1,6 @@
 import prisma from '../config/database';
 import { AppError } from '../middleware/errorHandler';
+import { notifyAssignment, notifyStatusChange } from './notificationservice';
 import type {
   CreateIssueInput,
   UpdateIssueInput,
@@ -48,6 +49,9 @@ export const createIssue = async (reporterId: string, data: CreateIssueInput) =>
     },
     include: issueInclude,
   });
+  if (issue.assigneeId) {
+    await notifyAssignment(issue.id, issue.assigneeId, reporterId);
+  }
 
   return issue;
 };
@@ -60,6 +64,9 @@ export const updateIssue = async (issueId: string, userId: string, data: UpdateI
   const cleanParentId = data.parentId === '' ? null : data.parentId;
 
   if (cleanAssigneeId !== undefined && cleanAssigneeId !== issue.assigneeId) {
+    if (cleanAssigneeId) {
+      await notifyAssignment(issueId, cleanAssigneeId, userId);
+    }
   }
 
   const updated = await prisma.issue.update({
@@ -140,7 +147,7 @@ export const moveIssue = async (issueId: string, userId: string, data: MoveIssue
     },
     include: issueInclude,
   });
-
+  await notifyStatusChange(issueId, newStatus, userId);
   if (issue.parentId) await updateParentStory(issue.parentId);
 
   return updated;

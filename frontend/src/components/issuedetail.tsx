@@ -24,7 +24,7 @@ export default function IssueDetail({
 }: IssueDetailProps) {
   const { user } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments] = useState<Comment[]>([]);
   const [projectMembers, setProjectMembers] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -57,27 +57,26 @@ export default function IssueDetail({
     try {
       setLoading(true);
 
-      // 1. Fetch the issue first
       const issueRes = await issueService.getIssue(issueId);
       const currentIssue = issueRes.data;
       setIssue(currentIssue);
 
-      // 2. Fetch everything else using currentIssue directly
-      // Corrected: Passing currentIssue.boardId as a string, not an object
+      //  Fetch everything else using currentIssue directly
+
       const [commentsRes, auditRes, boardIssuesRes] = await Promise.all([
         commentService.getComments(issueId),
         issueService.getIssueAuditLogs(issueId),
         issueService.getIssuesByBoard(currentIssue.boardId),
       ]);
 
-      // 3. Filter stories for the parent dropdown
+      // Filter stories for the parent dropdown
       setAvailableStories(
         boardIssuesRes.data.filter(
-          (i: any) => i.type === "STORY" && i.id !== issueId,
-        ),
+          (i: any) => i.type === "STORY" && i.id !== issueId
+        )
       );
 
-      // 4. Set the initial state for the Edit modal
+      //  Set the initial state for the Edit modal
       setEditData({
         title: currentIssue.title,
         description: currentIssue.description || "",
@@ -87,13 +86,13 @@ export default function IssueDetail({
         dueDate: currentIssue.dueDate ? currentIssue.dueDate.split("T")[0] : "",
       });
 
-      // 5. Build and sort the activity timeline
+      // Build and sort the activity timeline
       const combined = [
         ...commentsRes.data.map((c: any) => ({ ...c, type: "COMMENT" })),
         ...auditRes.data.map((a: any) => ({ ...a, type: "AUDIT" })),
       ].sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
       setTimeline(combined);
@@ -106,7 +105,6 @@ export default function IssueDetail({
 
   const handleInlineUpdate = async (field: string, value: any) => {
     try {
-      // Send update to backend
       await issueService.updateIssue(issueId, {
         [field]: value === "" ? null : value,
       });
@@ -245,8 +243,12 @@ export default function IssueDetail({
                 />
               ) : (
                 <p className={styles.descText}>
-                  {issue.description || (
-                    <span className={styles.emptyItalic}>
+                  {issue.description ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: issue.description }}
+                    />
+                  ) : (
+                    <span style={{ color: "#999" }}>
                       No description provided.
                     </span>
                   )}

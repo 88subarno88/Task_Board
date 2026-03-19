@@ -7,12 +7,12 @@ export const notificationService = {
   },
 
   async markAsRead(notificationId: string) {
-    const response = await api.put(`/notifications/${notificationId}/read`);
+    const response = await api.patch(`/notifications/${notificationId}/read`);
     return response.data;
   },
 
   async markAllAsRead() {
-    const response = await api.put("/notifications/read-all");
+    const response = await api.patch("/notifications/read-all");
     return response.data;
   },
 };

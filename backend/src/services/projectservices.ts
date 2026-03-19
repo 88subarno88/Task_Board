@@ -7,6 +7,7 @@ import {
 } from '../types/projecttype';
 import { AppError } from '../middleware/errorHandler';
 
+
 export const createProject = async (data: NewProjectData, creatorId: string) => {
   try {
     let newProject = await prisma.project.create({
