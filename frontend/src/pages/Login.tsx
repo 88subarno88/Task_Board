@@ -104,9 +104,6 @@ export default function Login() {
                 />
                 Remember me
               </label>
-              <a href="/forgot-password" className={styles.forgot}>
-                Forgot password?
-              </a>
             </div>
 
             <button type="submit" className={styles.button} disabled={loading}>

@@ -61,7 +61,7 @@
 }
 
 .column {
-  width: 300px;
+  flex: 1;
   min-width: 300px;
   background-color: var(--bg-main);
   border-radius: 8px;

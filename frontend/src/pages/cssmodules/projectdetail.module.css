@@ -8,6 +8,9 @@
   color: var(--text-primary, #333);
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
 }
 
 .backBtn {
@@ -29,7 +32,7 @@
 
 .headerTop {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-start;
   margin-bottom: 2rem;
 }
@@ -79,12 +82,12 @@
   font-weight: 600;
 }
 
-.grid {
+grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
+  width: 100%;
 }
-
 .card {
   background-color: var(--bg-panel, #fff);
   border: 1px solid var(--border-color, #e0e0e0);
