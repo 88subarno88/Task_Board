@@ -1,4 +1,4 @@
-import api from './api';
+import api from "./api";
 
 export interface CreateBoardPayload {
   name: string;
@@ -9,10 +9,15 @@ export interface UpdateBoardPayload {
   name?: string;
 }
 
+export interface UpdateColumnPayload {
+  name?: string;
+  wipLimit?: number | null;
+}
+
 const boardService = {
   async getBoardsByProject(projectId: string) {
-    const { data } = await api.get('/boards', {
-      params: { projectId }
+    const { data } = await api.get("/boards", {
+      params: { projectId },
     });
     return data;
   },
@@ -28,7 +33,7 @@ const boardService = {
   },
 
   async createBoard(payload: CreateBoardPayload) {
-    const { data } = await api.post('/boards', payload);
+    const { data } = await api.post("/boards", payload);
     return data;
   },
 
@@ -39,6 +44,17 @@ const boardService = {
 
   async deleteBoard(boardId: string) {
     const { data } = await api.delete(`/boards/${boardId}`);
+    return data;
+  },
+  async updateColumn(
+    boardId: string,
+    columnId: string,
+    payload: UpdateColumnPayload,
+  ) {
+    const { data } = await api.put(
+      `/boards/${boardId}/columns/${columnId}`,
+      payload,
+    );
     return data;
   },
 };

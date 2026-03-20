@@ -4,7 +4,8 @@ import boardService from "../services/boardservices";
 import issueService from "../services/Issueservice";
 import IssueForm from "../components/Issue";
 import IssueDetail from "../components/issuedetail";
-import styles from "./cssmodules/board.module.css"; 
+import { useAuth } from "../context/AuthContext";
+import styles from "./cssmodules/board.module.css";
 
 type Issue = {
   id: string;
@@ -41,6 +42,15 @@ export default function BoardView() {
   const [showCreateIssue, setShowCreateIssue] = useState<string | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [movingIssue, setMovingIssue] = useState(false);
+  const [wipModal, setWipModal] = useState<{
+    id: string;
+    name: string;
+    limit: number | null;
+  } | null>(null);
+  const [wipInput, setWipInput] = useState("");
+  const [savingWip, setSavingWip] = useState(false);
+  const { user } = useAuth();
+  const isAdmin = user?.globalRole === "GLOBAL_ADMIN";
 
   const loadBoard = async () => {
     if (!boardId) return;
@@ -64,15 +74,15 @@ export default function BoardView() {
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
       case "CRITICAL":
-        return "#dc3545"; 
+        return "#dc3545";
       case "HIGH":
-        return "#fd7e14"; 
+        return "#fd7e14";
       case "MEDIUM":
-        return "#ffc107"; 
+        return "#ffc107";
       case "LOW":
-        return "#28a745"; 
+        return "#28a745";
       default:
-        return "#6c757d"; 
+        return "#6c757d";
     }
   };
 
@@ -111,6 +121,44 @@ export default function BoardView() {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDragOverColumn(columnId);
+  };
+
+  const openWipModal = (
+    columnId: string,
+    currentLimit: number | null | undefined,
+    columnName: string,
+  ) => {
+    setWipModal({
+      id: columnId,
+      name: columnName,
+      limit: currentLimit ?? null,
+    });
+    setWipInput(currentLimit ? currentLimit.toString() : "");
+  };
+
+  const handleSaveWip = async () => {
+    if (!wipModal || !isAdmin) return;
+
+    const newLimit = wipInput.trim() === "" ? null : parseInt(wipInput, 10);
+
+    if (wipInput.trim() !== "" && isNaN(newLimit as number)) {
+      alert("Please enter a valid number");
+      return;
+    }
+
+    setSavingWip(true);
+    try {
+      await boardService.updateColumn(boardId!, wipModal.id, {
+        name: wipModal.name,
+        wipLimit: newLimit,
+      });
+      await loadBoard();
+      setWipModal(null);
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to update WIP Limit.");
+    } finally {
+      setSavingWip(false);
+    }
   };
 
   const handleDrop = async (
@@ -196,6 +244,17 @@ export default function BoardView() {
                     {column.issues ? column.issues.length : 0}
                     {column.wipLimit != null ? ` / ${column.wipLimit}` : ""}
                   </span>
+                  {isAdmin && (
+                    <button
+                      onClick={() =>
+                        openWipModal(column.id, column.wipLimit, column.name)
+                      }
+                      className={styles.editWipBtn}
+                      title="Edit WIP Limit"
+                    >
+                      ✏️
+                    </button>
+                  )}
                   <button
                     onClick={() => setShowCreateIssue(column.id)}
                     className={styles.addBtn}
@@ -220,7 +279,7 @@ export default function BoardView() {
                       className={styles.issueCard}
                       style={{
                         borderLeftColor: getPriorityColor(issue.priority),
-                      }} 
+                      }}
                     >
                       <div className={styles.issueType}>
                         {getTypeIcon(issue.type)} {issue.type || "TASK"}
@@ -270,9 +329,8 @@ export default function BoardView() {
 
       {selectedIssue !== null && boardId !== undefined && (
         <IssueDetail
-          projectId={board.projectId} 
+          projectId={board.projectId}
           issueId={selectedIssue}
-         
           onClose={() => setSelectedIssue(null)}
           onUpdate={() => {
             setSelectedIssue(null);
@@ -284,6 +342,43 @@ export default function BoardView() {
       {movingIssue && (
         <div className={styles.overlay}>
           <div className={styles.overlayContent}>Moving issue...</div>
+        </div>
+      )}
+      {wipModal && (
+        <div className={styles.overlay}>
+          <div className={styles.wipModalContainer}>
+            <h3 className={styles.wipModalTitle}>Edit WIP Limit</h3>
+            <p className={styles.wipModalDesc}>
+              Set a limit for <strong>{wipModal.name}</strong>. Leave blank to
+              remove.
+            </p>
+
+            <input
+              type="number"
+              value={wipInput}
+              onChange={(e) => setWipInput(e.target.value)}
+              placeholder="e.g. 5"
+              className={styles.wipModalInput}
+              autoFocus
+            />
+
+            <div className={styles.wipModalActions}>
+              <button
+                onClick={() => setWipModal(null)}
+                className={styles.btnCancel}
+                disabled={savingWip}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveWip}
+                className={styles.btnSave}
+                disabled={savingWip}
+              >
+                {savingWip ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

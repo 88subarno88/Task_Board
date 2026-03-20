@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import projectService from "../services/projectservices";
 import boardService from "../services/boardservices";
+import styles from "./cssmodules/projectdetail.module.css";
 
 type ProjectData = {
   id: string;
@@ -14,11 +15,12 @@ type BoardSummary = {
   name: string;
   columns?: { id: string }[];
 };
+
 type Member = {
-  id: string
-  role: string
-  user: { id: string; name: string; email: string }
-}
+  id: string;
+  role: string;
+  user: { id: string; name: string; email: string };
+};
 
 type CreateBoardFormProps = {
   projectId?: string;
@@ -36,27 +38,24 @@ export default function ProjectDetail() {
   const [error, setError] = useState("");
   const [showCreateBoard, setShowCreateBoard] = useState(false);
 
-  const [members, setMembers] = useState<Member[]>([])
-  const [showAddMember, setShowAddMember] = useState(false)
-  const [newMemberEmail, setNewMemberEmail] = useState('')
-  const [newMemberRole, setNewMemberRole] = useState('PROJECT_MEMBER')
+  const [members, setMembers] = useState<Member[]>([]);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState("PROJECT_MEMBER");
 
   const loadProjectAndBoards = async () => {
     if (!projectId) return;
 
     try {
       setLoading(true);
-
       const projectResponse = await projectService.getProject(projectId);
       setProject(projectResponse.data);
 
       const boardsResponse = await boardService.getBoardsByProject(projectId);
       setBoards(boardsResponse.data);
 
-      const membersResponse = await projectService.getMembers(projectId)
+      const membersResponse = await projectService.getMembers(projectId);
       setMembers(membersResponse.data);
-
-      console.log("boards loaded:", boardsResponse.data);
     } catch (err) {
       setError("Failed to load project details");
     } finally {
@@ -66,132 +65,148 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     loadProjectAndBoards();
-  }, []);
+  }, [projectId]);
 
-  if (loading) {
-    return <div style={{ padding: "20px" }}>Loading...</div>;
-  }
-
-  if (!project) {
-    return <div style={{ padding: "20px" }}>Project not found</div>;
-  }
+  if (loading) return <div className={styles.container}>Loading...</div>;
+  if (!project)
+    return <div className={styles.container}>Project not found</div>;
 
   return (
-  <div style={styles.container}>
-    <div style={styles.header}>
-      <button onClick={() => navigate("/projects")} style={styles.backButton}>
-        Back
+    <div className={styles.container}>
+      <button onClick={() => navigate("/projects")} className={styles.backBtn}>
+        ← Back to Projects
       </button>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+
+      <div className={styles.headerTop}>
         <div>
-          <h1>{project.name}</h1>
-          <p style={{ color: "gray" }}>{project.description}</p>
+          <h1 className={styles.projectTitle}>{project.name}</h1>
+          <p className={styles.projectDesc}>
+            {project.description || "No description provided."}
+          </p>
         </div>
-        <button onClick={() => setShowCreateBoard(true)} style={styles.primaryButton}>
-          Create Board
-        </button>
       </div>
-    </div>
 
-    {error && <div style={{ color: "red" }}>{error}</div>}
-
-    {showCreateBoard && (
-      <CreateBoardForm
-        projectId={projectId}
-        onClose={() => setShowCreateBoard(false)}
-        onSuccess={() => {
-          setShowCreateBoard(false)
-          loadProjectAndBoards()
-        }}
-      />
-    )}
-
-   
-    <div>
-      <h2>Boards</h2>
-      {boards.length === 0 ? (
-        <p>No boards yet. Create one!</p>
-      ) : (
-        <div style={styles.grid}>
-          {boards.map((board) => (
-            <div
-              key={board.id}
-              onClick={() => navigate(`/boards/${board.id}`)}
-              style={styles.card}
-            >
-              <h3>{board.name}</h3>
-              <p>{board.columns ? board.columns.length : 0} columns</p>
-            </div>
-          ))}
-        </div>
+      {error && (
+        <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>
       )}
-    </div>
 
- 
-    <div style={{ marginTop: '30px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Members</h2>
-        <button onClick={() => setShowAddMember(!showAddMember)} style={styles.primaryButton}>
-          Add Member
-        </button>
-      </div>
-
-      {showAddMember && (
-        <div style={{ padding: '15px', border: '1px solid #ccc', borderRadius: '5px', marginBottom: '15px' }}>
-          <h3>Add Member by User ID</h3>
-          <input
-            type="text"
-            placeholder="User ID"
-            value={newMemberEmail}
-            onChange={(e) => setNewMemberEmail(e.target.value)}
-            style={{ padding: '8px', width: '60%', marginRight: '10px' }}
-          />
-          <select
-            value={newMemberRole}
-            onChange={(e) => setNewMemberRole(e.target.value)}
-            style={{ padding: '8px', marginRight: '10px' }}
-          >
-            <option value="PROJECT_MEMBER">Member</option>
-            <option value="PROJECT_ADMIN">Admin</option>
-            <option value="PROJECT_VIEWER">Viewer</option>
-          </select>
+      <div>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Boards</h2>
           <button
-            onClick={async () => {
-              try {
-                const userRes = await projectService.searchUserByEmail(newMemberEmail)
-                const userId = userRes.data.id
-                await projectService.addMember(projectId!, userId, newMemberRole)
-                setNewMemberEmail('')
-                setShowAddMember(false)
-                loadProjectAndBoards()
-              } catch {
-                alert('Failed to add member. Check the User ID.')
-              }
-            }}
-            style={styles.primaryButton}
+            onClick={() => setShowCreateBoard(true)}
+            className={styles.primaryBtn}
           >
-            Add
+            + Create Board
           </button>
         </div>
-      )}
 
-      {members.length === 0 ? (
-        <p>No members yet.</p>
-      ) : (
-        <div style={styles.grid}>
-          {members.map((member) => (
-            <div key={member.id} style={styles.card}>
-              <p><strong>{member.user.name}</strong></p>
-              <p style={{ color: 'gray', fontSize: '12px' }}>{member.user.email}</p>
-              <p style={{ color: 'blue', fontSize: '12px' }}>{member.role}</p>
-            </div>
-          ))}
+        {boards.length === 0 ? (
+          <p className={styles.emptyState}>
+            No boards yet. Create one to get started!
+          </p>
+        ) : (
+          <div className={styles.grid}>
+            {boards.map((board) => (
+              <div
+                key={board.id}
+                onClick={() => navigate(`/boards/${board.id}`)}
+                className={`${styles.card} ${styles.cardClickable}`}
+              >
+                <h3 className={styles.cardTitle}>{board.name}</h3>
+                <p className={styles.cardMeta}>
+                  {board.columns ? board.columns.length : 0} columns
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Members</h2>
+          <button
+            onClick={() => setShowAddMember(!showAddMember)}
+            className={styles.primaryBtn}
+          >
+            {showAddMember ? "Close" : "+ Add Member"}
+          </button>
         </div>
+
+        {showAddMember && (
+          <div className={styles.addMemberBox}>
+            <input
+              type="text"
+              placeholder="Enter User Email or ID"
+              value={newMemberEmail}
+              onChange={(e) => setNewMemberEmail(e.target.value)}
+              className={styles.input}
+            />
+            <select
+              value={newMemberRole}
+              onChange={(e) => setNewMemberRole(e.target.value)}
+              className={styles.select}
+            >
+              <option value="PROJECT_MEMBER">Member</option>
+              <option value="PROJECT_ADMIN">Admin</option>
+              <option value="PROJECT_VIEWER">Viewer</option>
+            </select>
+            <button
+              onClick={async () => {
+                if (!newMemberEmail.trim()) return;
+                try {
+                  const userRes =
+                    await projectService.searchUserByEmail(newMemberEmail);
+                  const userId = userRes.data.id;
+                  await projectService.addMember(
+                    projectId!,
+                    userId,
+                    newMemberRole,
+                  );
+                  setNewMemberEmail("");
+                  setShowAddMember(false);
+                  loadProjectAndBoards();
+                } catch {
+                  alert("Failed to add member. Check the User ID/Email.");
+                }
+              }}
+              className={styles.primaryBtn}
+            >
+              Add User
+            </button>
+          </div>
+        )}
+
+        {members.length === 0 ? (
+          <p className={styles.emptyState}>No members yet.</p>
+        ) : (
+          <div className={styles.grid}>
+            {members.map((member) => (
+              <div key={member.id} className={styles.card}>
+                <h3 className={styles.cardTitle}>{member.user.name}</h3>
+                <p className={styles.cardMeta}>{member.user.email}</p>
+                <span className={styles.roleTag}>
+                  {member.role.replace("PROJECT_", "")}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showCreateBoard && (
+        <CreateBoardForm
+          projectId={projectId}
+          onClose={() => setShowCreateBoard(false)}
+          onSuccess={() => {
+            setShowCreateBoard(false);
+            loadProjectAndBoards();
+          }}
+        />
       )}
     </div>
-
-  </div>
-);
+  );
 }
 
 function CreateBoardForm({
@@ -208,7 +223,7 @@ function CreateBoardForm({
 
     boardService
       .createBoard({ name: name, projectId: projectId || "" })
-      .then((_res) => {
+      .then(() => {
         onSuccess();
         setLoading(false);
       })
@@ -220,32 +235,45 @@ function CreateBoardForm({
   };
 
   return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <h2>Create Board</h2>
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <h2 className={styles.modalTitle}>Create Board</h2>
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "15px" }}>
-            <label>Board Name</label>
-            <br />
+          <div style={{ marginBottom: "20px" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontWeight: "500",
+              }}
+            >
+              Board Name
+            </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              style={{ padding: "8px", width: "90%" }}
+              className={styles.input}
+              style={{ width: "100%", boxSizing: "border-box" }}
+              autoFocus
             />
           </div>
 
-          <div style={{ display: "flex", gap: "10px" }}>
+          <div className={styles.btnGroup}>
             <button
               type="submit"
               disabled={loading}
-              style={styles.primaryButton}
+              className={styles.primaryBtn}
             >
-              Submit
+              {loading ? "Creating..." : "Create Board"}
             </button>
-            <button type="button" onClick={onClose}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.btnCancel}
+            >
               Cancel
             </button>
           </div>
@@ -254,40 +282,3 @@ function CreateBoardForm({
     </div>
   );
 }
-
-const styles = {
-  container: { padding: "20px", fontFamily: "sans-serif" },
-  header: { marginBottom: "20px" },
-  backButton: { padding: "5px 10px", marginBottom: "10px", cursor: "pointer" },
-  primaryButton: {
-    padding: "10px 15px",
-    backgroundColor: "blue",
-    color: "white",
-    cursor: "pointer",
-  },
-  grid: { display: "flex", flexWrap: "wrap", gap: "15px" },
-  card: {
-    border: "1px solid black",
-    padding: "15px",
-    width: "200px",
-    cursor: "pointer",
-    borderRadius: "5px",
-  },
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "5px",
-    width: "300px",
-  },
-} as const;

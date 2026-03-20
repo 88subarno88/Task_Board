@@ -1,0 +1,219 @@
+.container {
+  padding: 2rem 4rem;
+  font-family:
+    "Sora",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: var(--text-primary, #333);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.backBtn {
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-panel, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  color: var(--text-primary, #333);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+
+.backBtn:hover {
+  background-color: var(--border-color, #e0e0e0);
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.projectTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.projectDesc {
+  color: var(--text-secondary, #666);
+  margin: 0;
+  font-size: 1rem;
+}
+
+.primaryBtn {
+  background-color: #5a52ff;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.primaryBtn:hover {
+  opacity: 0.9;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-color, #eee);
+  padding-bottom: 0.5rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--bg-panel, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.cardClickable {
+  cursor: pointer;
+}
+
+.cardClickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+  border-color: #5a52ff;
+}
+
+.cardTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.cardMeta {
+  color: var(--text-secondary, #666);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.roleTag {
+  display: inline-block;
+  margin-top: 0.8rem;
+  font-size: 0.7rem;
+  color: #5a52ff;
+  background-color: rgba(90, 82, 255, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.addMemberBox {
+  background-color: var(--bg-panel, #fff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.input,
+.select {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background-color: var(--bg-main, #fff);
+  color: var(--text-primary, #333);
+  outline: none;
+}
+
+.input:focus,
+.select:focus {
+  border-color: #5a52ff;
+}
+
+.input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modalContent {
+  background-color: var(--bg-panel, #fff);
+  color: var(--text-primary, #333);
+  padding: 2rem;
+  border-radius: 8px;
+  width: 360px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+}
+
+.btnGroup {
+  display: flex;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+.btnCancel {
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #ccc);
+  background: transparent;
+  color: var(--text-primary, #333);
+}
+
+.btnCancel:hover {
+  background-color: var(--border-color, #eee);
+}
+
+.emptyState {
+  color: var(--text-secondary, #666);
+  font-style: italic;
+  margin-top: 1rem;
+}

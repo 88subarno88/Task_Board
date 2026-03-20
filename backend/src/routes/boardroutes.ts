@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as boardController from '../controllers/boardcontroller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireGlobalAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -19,6 +19,7 @@ router.post('/:boardId/columns', boardController.addColumn);
 router.put('/:boardId/columns/reorder', boardController.reorderColumns);
 router.put('/:boardId/columns/:columnId', boardController.updateColumn);
 router.delete('/:boardId/columns/:columnId', boardController.deleteColumn);
+router.put('/:boardId/columns/:columnId', requireGlobalAdmin, boardController.updateColumn);
 
 // wip limit check
 router.get('/:boardId/columns/:columnId/check-wip', boardController.checkWipLimit);
