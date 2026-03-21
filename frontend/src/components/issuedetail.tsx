@@ -366,6 +366,50 @@ export default function IssueDetail({
                   onChange={setNewComment}
                   placeholder="Add a rich text comment..."
                 />
+                {/* clickable mention buttons */}
+                <div
+                  style={{
+                    margin: "6px 0",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "6px",
+                    alignItems: "center",
+                  }}
+                >
+                  <span style={{ fontSize: "12px", color: "#888" }}>
+                    Mention:
+                  </span>
+                  {projectMembers.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() =>
+                        setNewComment((prev) => prev + `@${m.email} `)
+                      }
+                      style={{
+                        fontSize: "11px",
+                        padding: "2px 8px",
+                        borderRadius: "12px",
+                        border: "1px solid #ddd",
+                        backgroundColor: "#f5f5f5",
+                        cursor: "pointer",
+                        color: "#333",
+                      }}
+                    >
+                      @{m.name}
+                    </button>
+                  ))}
+                </div>
+
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "#888",
+                    margin: "4px 0 8px",
+                  }}
+                >
+                  💡 Use @email to mention someone (e.g. @rohit@test.com)
+                </p>
               </div>
               <div className={styles.commentActions}>
                 <button
