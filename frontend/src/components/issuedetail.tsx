@@ -233,13 +233,12 @@ export default function IssueDetail({
             <div>
               <h3 className={styles.sectionTitle}>Description</h3>
               {isEditing ? (
-                <textarea
+                <ReactQuill
                   value={editData.description}
-                  onChange={(e) =>
-                    setEditData({ ...editData, description: e.target.value })
+                  onChange={(val) =>
+                    setEditData({ ...editData, description: val })
                   }
-                  rows={6}
-                  className={styles.textArea}
+                  theme="snow"
                 />
               ) : (
                 <p className={styles.descText}>

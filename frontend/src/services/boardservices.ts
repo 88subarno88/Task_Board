@@ -49,13 +49,29 @@ const boardService = {
   async updateColumn(
     boardId: string,
     columnId: string,
-    payload: UpdateColumnPayload,
+    payload: UpdateColumnPayload
   ) {
     const { data } = await api.put(
       `/boards/${boardId}/columns/${columnId}`,
-      payload,
+      payload
     );
     return data;
+  },
+  async getStoriesByProject(projectId: string) {
+    // get all boards first then fetch stories from each
+    const boardsRes = await api.get("/boards", { params: { projectId } });
+    const boards = boardsRes.data.data || [];
+
+    const allStories: any[] = [];
+    for (const board of boards) {
+      const issuesRes = await api.get("/issues", {
+        params: { boardId: board.id },
+      });
+      const issues = issuesRes.data.data || [];
+      const stories = issues.filter((i: any) => i.type === "STORY");
+      allStories.push(...stories);
+    }
+    return allStories;
   },
 };
 
