@@ -180,10 +180,12 @@ cd Task_Board
 
 ```bash
 # Terminal 1 — Backend
+cd Task_Board
 cd backend
 npm install
 
 # Terminal 2 — Frontend
+cd Task_Board
 cd frontend
 npm install
 ```
