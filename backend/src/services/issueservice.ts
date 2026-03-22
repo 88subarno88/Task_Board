@@ -33,6 +33,16 @@ export const createIssue = async (reporterId: string, data: CreateIssueInput) =>
   const column = await prisma.column.findUnique({ where: { id: data.columnId } });
   if (!column) throw new AppError(404, 'Column not found');
 
+  if (column.wipLimit) {
+    const currentCount = await prisma.issue.count({ where: { columnId: data.columnId } });
+    if (currentCount >= column.wipLimit) {
+      throw new AppError(
+        400,
+        `Column "${column.name}" has reached its WIP limit of ${column.wipLimit}`
+      );
+    }
+  }
+
   const issue = await prisma.issue.create({
     data: {
       title: data.title,
@@ -64,6 +74,16 @@ export const updateIssue = async (issueId: string, userId: string, data: UpdateI
   const cleanParentId = data.parentId === '' ? null : data.parentId;
 
   if (cleanAssigneeId !== undefined && cleanAssigneeId !== issue.assigneeId) {
+    await prisma.auditLog.create({
+      data: {
+        issueId,
+        userId,
+        action: 'ASSIGNEE_CHANGED',
+        field: 'assigneeId',
+        oldValue: issue.assigneeId ?? 'none',
+        newValue: cleanAssigneeId ?? 'none',
+      },
+    });
     if (cleanAssigneeId) {
       await notifyAssignment(issueId, cleanAssigneeId, userId);
     }
