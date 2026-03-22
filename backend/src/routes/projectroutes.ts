@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import * as projectcontroller from '../controllers/projectcontroller';
 import { authenticate, authorizeProjectRole } from '../middleware/auth';
-import { requireProjectadmin, requireProjectviewer } from '../middleware/rolebasedcontroller';
 import { ProjectRole } from '@prisma/client';
 
 const router = Router();
