@@ -1,14 +1,14 @@
-# Task Board — Project Management System
+# 📋 Task Board — Project Management System
 
 > A full-stack, Jira-inspired project management and issue-tracking application built entirely in strict TypeScript. Teams can plan, track, and manage work through customizable Kanban boards, hierarchical issues, role-based access control, audit trails, and rich collaboration features.
 
 ---
 
-## 👥 Team Members
+## Team Members
 
 | Name         | Entry Number | GitHub                                         |
 | ------------ | ------------ | ---------------------------------------------- |
-| Subarno Saha | 2024cs50431  | [@88subarno88](https://github.com/88subarno88) |
+| Subarno Saha | 2024CS50431  | [@88subarno88](https://github.com/88subarno88) |
 | Rohit Meena  | 2024CS10030  | [@amigo-35](https://github.com/amigo-35)       |
 
 > **GitHub Repository:** https://github.com/88subarno88/Task_Board
@@ -38,8 +38,8 @@
 
 - Each project has one or more boards with its own column configuration
 - Default columns: `To Do`, `In Progress`, `Review`, `Done` (customizable per board)
-- **Native HTML5 Drag & Drop** — no external DnD libraries (as required)
-- **WIP Limits** — enforced at column level; invalid moves are blocked at the API, not just warned
+- Native HTML5 Drag & Drop — no external DnD libraries (as required)
+- WIP Limits — enforced at column level; invalid moves are blocked at the API, not just warned
 - Project Admins can add, rename, reorder, and delete columns
 
 ### Issues / Tasks
@@ -74,19 +74,19 @@
 - Comment threads on tasks
 - Delete own comments
 - `@email` mention system with clickable mention buttons as they are unique
-- **Activity Timeline** per task — comments and audit events merged chronologically
-- **Rich text support** in both issue descriptions and comments — custom-built editor using `contenteditable` + `execCommand` with no external WYSIWYG library (bold, italic, underline, font family, font size 12–72px, lists, blockquote, code block, links, alignment, strikethrough, indent/outdent, clear formatting)
+- Activity Timeline per task — comments and audit events merged chronologically
+- Rich text support in both issue descriptions and comments — custom-built editor using `contenteditable` + `execCommand` with no external WYSIWYG library (bold, italic, underline, font family, font size 12–72px, lists, blockquote, code block, links, alignment, strikethrough, indent/outdent, clear formatting)
 
 ### Notifications
 
 - Triggered by: task assignment, status change, comment added, user mentioned
-- **Persistent in-app notification center** — stored in the database
+- Persistent in-app notification center — stored in the database
 - Users can mark notifications as read
 - Polling-based fetching
 
 ---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 | Layer       | Technology                                                                              |
 | ----------- | --------------------------------------------------------------------------------------- |
@@ -193,30 +193,37 @@ npm install
 Create `backend/.env`:
 
 ```env
-PORT=5000
-DATABASE_URL="postgresql://<USERNAME>:<PASSWORD>@localhost:5432/taskboard?schema=public"
+DATABASE_URL="postgresql://<YOUR_USERNAME>@localhost:5432/taskboard?schema=public"
+DIRECT_URL="postgresql://<YOUR_USERNAME>@localhost:5432/taskboard?schema=public"
+JWT_ACCESS_SECRET="taskboard-access-secret-2024"
+JWT_REFRESH_SECRET="taskboard-refresh-secret-2024"
+JWT_ACCESS_EXPIRY="15m"
+JWT_REFRESH_EXPIRY="7d"
+PORT=3000
+NODE_ENV="development"
+CORS_ORIGIN="http://localhost:5173"
+```
 
-JWT_SECRET="your_jwt_access_secret_key"
-JWT_REFRESH_SECRET="your_jwt_refresh_secret_key"
-JWT_EXPIRES_IN="15m"
-JWT_REFRESH_EXPIRES_IN="7d"
+Create `frontend/.env`:
 
-CLIENT_URL="http://localhost:5173"
+```env
+VITE_API_URL=http://localhost:3000/api
 ```
 
 ### 4. Database Setup (Prisma)
 
 ```bash
 cd backend
-npx prisma generate
 npx prisma db push
 # or: npx prisma migrate dev --name init
 ```
 
+> **Note:** You may see a warning about `url` and `directUrl` in `schema.prisma` — ignore it, it does not affect functionality.
+
 ### 5. Start the Application
 
 ```bash
-# Terminal 1 — Backend  →  http://localhost:5000
+# Terminal 1 — Backend  →  http://localhost:3000
 cd backend
 npm run dev
 
@@ -227,7 +234,7 @@ npm run dev
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 ### Authentication
 
@@ -255,22 +262,22 @@ npm run dev
 | POST   | `/api/issues`           | Create a new issue                              |
 | GET    | `/api/issues/:id`       | Get issue with comments and audit log           |
 | PUT    | `/api/issues/:id`       | Update issue metadata                           |
-| PUT    | `/api/issues/:id/move`  | Move issue — triggers workflow + WIP validation |
+| PATCH  | `/api/issues/:id/move`  | Move issue — triggers workflow + WIP validation |
 | DELETE | `/api/issues/:id`       | Delete an issue                                 |
 | GET    | `/api/issues/:id/audit` | Get audit log for an issue                      |
 
 ### Comments & Notifications
 
-| Method | Endpoint                      | Description                        |
-| ------ | ----------------------------- | ---------------------------------- |
-| POST   | `/api/comments/:issueId`      | Add a comment                      |
-| DELETE | `/api/comments/:id`           | Delete own comment                 |
-| GET    | `/api/notifications`          | Get notifications for current user |
-| PUT    | `/api/notifications/:id/read` | Mark notification as read          |
+| Method | Endpoint                        | Description                        |
+| ------ | ------------------------------- | ---------------------------------- |
+| POST   | `/api/issues/:issueId/comments` | Add a comment                      |
+| DELETE | `/api/comments/:id`             | Delete own comment                 |
+| GET    | `/api/notifications`            | Get notifications for current user |
+| PATCH  | `/api/notifications/:id/read`   | Mark notification as read          |
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Backend unit tests cover core business logic, workflow validation, WIP enforcement, and RBAC constraints.
 
@@ -289,5 +296,3 @@ npm run test
 - **Story status is auto-derived** — when all children reach `Done`, the parent Story auto-transitions. If children are `In Progress` or `Review`, the Story moves to `In Progress`.
 - **Audit log is append-only** — events are never edited or deleted, maintaining a reliable history.
 - **Prisma + PostgreSQL** — chosen for type-safe queries and easy schema migrations.
-
----
