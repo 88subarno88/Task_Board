@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import projectService from "../services/projectservices";
 import type { Project } from "../types/index";
+import { useAuth } from "../context/AuthContext";
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -10,6 +11,8 @@ export default function Projects() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isGlobalAdmin = user?.globalRole === "GLOBAL_ADMIN";
 
   const loadProjects = useCallback(async () => {
     try {
@@ -35,12 +38,14 @@ export default function Projects() {
     <div style={styles.container}>
       <header style={styles.header}>
         <h1>My Projects</h1>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          style={styles.primaryBtn}
-        >
-          Create Project
-        </button>
+        {isGlobalAdmin && (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            style={styles.primaryBtn}
+          >
+            Create Project
+          </button>
+        )}
       </header>
 
       {error && <div style={styles.errorBanner}>{error}</div>}

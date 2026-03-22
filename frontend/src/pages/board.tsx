@@ -246,21 +246,6 @@ export default function BoardView() {
             {board.name}
           </h1>
           <div style={{ display: "flex", gap: "8px" }}>
-            {isReadOnly && (
-              <span
-                className={styles.roleTag}
-                style={{
-                  backgroundColor: "#fff3cd",
-                  color: "#856404",
-                  padding: "4px 8px",
-                  borderRadius: "4px",
-                  fontSize: "0.8rem",
-                  border: "1px solid #ffeeba",
-                }}
-              >
-                View Only
-              </span>
-            )}
             {isGlobalAdmin && (
               <span
                 className={styles.roleTag}
@@ -274,6 +259,51 @@ export default function BoardView() {
                 }}
               >
                 Global Admin
+              </span>
+            )}
+            {!isGlobalAdmin && projectRole === "PROJECT_ADMIN" && (
+              <span
+                className={styles.roleTag}
+                style={{
+                  backgroundColor: "#cce5ff",
+                  color: "#004085",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  fontSize: "0.8rem",
+                  border: "1px solid #b8daff",
+                }}
+              >
+                Project Admin
+              </span>
+            )}
+            {!isGlobalAdmin && projectRole === "PROJECT_MEMBER" && (
+              <span
+                className={styles.roleTag}
+                style={{
+                  backgroundColor: "#e2d9f3",
+                  color: "#4a235a",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  fontSize: "0.8rem",
+                  border: "1px solid #c5b3e6",
+                }}
+              >
+                Project Member
+              </span>
+            )}
+            {isReadOnly && (
+              <span
+                className={styles.roleTag}
+                style={{
+                  backgroundColor: "#fff3cd",
+                  color: "#856404",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  fontSize: "0.8rem",
+                  border: "1px solid #ffeeba",
+                }}
+              >
+                View Only
               </span>
             )}
           </div>

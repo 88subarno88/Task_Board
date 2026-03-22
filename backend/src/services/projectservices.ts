@@ -7,7 +7,6 @@ import {
 } from '../types/projecttype';
 import { AppError } from '../middleware/errorHandler';
 
-
 export const createProject = async (data: NewProjectData, creatorId: string) => {
   try {
     let newProject = await prisma.project.create({
@@ -104,6 +103,7 @@ export const getProjectById = async (projectId: string) => {
               name: true,
               email: true,
               avatarUrl: true,
+              globalRole: true,
             },
           },
         },
@@ -200,19 +200,34 @@ export const addMember = async (projectId: string, data: AddUserToProject) => {
 export const updateMemberRole = async (
   projectId: string,
   userId: string,
-  data: ChangeMemberRole
+  data: ChangeMemberRole,
+   requesterId: string,
 ) => {
   let theMember = await prisma.projectMember.findUnique({
     where: {
       projectId_userId: {
         projectId: projectId,
         userId: userId,
+       
       },
     },
   });
 
   if (theMember == null) {
     throw new AppError(404, 'Member not found in this project');
+  }
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { globalRole: true },
+  });
+
+  const requester = await prisma.user.findUnique({
+    where: { id: requesterId },
+    select: { globalRole: true },
+  });
+
+  if (targetUser?.globalRole === 'GLOBAL_ADMIN' && requester?.globalRole !== 'GLOBAL_ADMIN') {
+    throw new AppError(403, 'Cannot change the role of a Global Admin');
   }
 
   try {
@@ -257,6 +272,15 @@ export const removeMember = async (projectId: string, userId: string) => {
     throw new AppError(404, 'Member not found');
   }
 
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { globalRole: true },
+  });
+
+  if (targetUser?.globalRole === 'GLOBAL_ADMIN') {
+    throw new AppError(403, 'Cannot remove a Global Admin from a project');
+  }
+
   let numberOfAdmins = await prisma.projectMember.count({
     where: {
       projectId: projectId,
@@ -293,6 +317,7 @@ export const getProjectMembers = async (projectId: string) => {
             name: true,
             email: true,
             avatarUrl: true,
+            globalRole: true,
           },
         },
       },

@@ -1,6 +1,5 @@
+import RichTextEditor from "../components/RichTextEditot";
 import React, { useState, useEffect } from "react";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
 import issueStyles from "../components/cssmodules/issue.module.css";
 import { useParams, useNavigate } from "react-router-dom";
 import projectService from "../services/projectservices";
@@ -25,7 +24,7 @@ type BoardSummary = {
 type Member = {
   id: string;
   role: string;
-  user: { id: string; name: string; email: string };
+  user: { id: string; name: string; email: string; globalRole?: string };
 };
 
 type CreateBoardFormProps = {
@@ -318,63 +317,88 @@ export default function ProjectDetail() {
           <p className={styles.emptyState}>No members yet.</p>
         ) : (
           <div className={styles.grid}>
-            {members.map((member) => (
-              <div key={member.id} className={styles.card}>
-                <h3 className={styles.cardTitle}>{member.user.name}</h3>
-                <p className={styles.cardMeta}>{member.user.email}</p>
-                {canManageProject && member.user.id !== user?.id ? (
-                  <div
-                    style={{
-                      marginTop: "15px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <select
-                      value={member.role}
-                      onChange={(e) =>
-                        handleUpdateRole(member.user.id, e.target.value)
-                      }
-                      className={styles.select}
-                      style={{
-                        padding: "4px 8px",
-                        fontSize: "12px",
-                        width: "auto",
-                      }}
-                    >
-                      <option value="PROJECT_ADMIN">Admin</option>
-                      <option value="PROJECT_MEMBER">Member</option>
-                      <option value="PROJECT_VIEWER">Viewer</option>
-                    </select>
+            {members.map((member) => {
+              const memberIsGlobalAdmin =
+                member.user.globalRole === "GLOBAL_ADMIN";
+              // Project admins cannot edit/remove global admins
+              const canEditThisMember =
+                canManageProject &&
+                member.user.id !== user?.id &&
+                !(memberIsGlobalAdmin && !isGlobalAdmin);
 
-                    <button
-                      onClick={() => handleRemoveMember(member.user.id)}
+              return (
+                <div key={member.id} className={styles.card}>
+                  <h3 className={styles.cardTitle}>{member.user.name}</h3>
+                  <p className={styles.cardMeta}>{member.user.email}</p>
+
+                  {canEditThisMember ? (
+                    <div
                       style={{
-                        color: "#dc3545",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        fontWeight: "bold",
+                        marginTop: "15px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
                       }}
                     >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <span
-                    className={styles.roleTag}
-                    style={{ marginTop: "10px", display: "inline-block" }}
-                  >
-                    {member.role.replace("PROJECT_", "")}
-                  </span>
-                )}
-                <span className={styles.roleTag}>
-                  {member.role.replace("PROJECT_", "")}
-                </span>
-              </div>
-            ))}
+                      <select
+                        value={member.role}
+                        onChange={(e) =>
+                          handleUpdateRole(member.user.id, e.target.value)
+                        }
+                        className={styles.select}
+                        style={{
+                          padding: "4px 8px",
+                          fontSize: "12px",
+                          width: "auto",
+                        }}
+                      >
+                        <option value="PROJECT_ADMIN">Admin</option>
+                        <option value="PROJECT_MEMBER">Member</option>
+                        <option value="PROJECT_VIEWER">Viewer</option>
+                      </select>
+                      <button
+                        onClick={() => handleRemoveMember(member.user.id)}
+                        style={{
+                          color: "#dc3545",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        display: "flex",
+                        gap: "6px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      {memberIsGlobalAdmin && (
+                        <span
+                          className={styles.roleTag}
+                          style={{
+                            backgroundColor: "#d4edda",
+                            color: "#155724",
+                            border: "1px solid #c3e6cb",
+                          }}
+                        >
+                          Global Admin
+                        </span>
+                      )}
+                      <span className={styles.roleTag}>
+                        {member.role.replace("PROJECT_", "")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -628,11 +652,9 @@ function CreateStoryForm({
             <div className={issueStyles.formGroup}>
               <label className={issueStyles.label}>Description</label>
               <div style={{ backgroundColor: "#ffffff", borderRadius: "4px" }}>
-                <ReactQuill
-                  theme="snow"
-                  value={description}
-                  onChange={setDescription}
+                <RichTextEditor
                   placeholder="Add a detailed description..."
+                  onChange={(html: string) => setDescription(html)}
                 />
               </div>
             </div>

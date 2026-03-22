@@ -168,7 +168,12 @@ export const updateMemberRole = async (req: Request, res: Response) => {
       return;
     }
 
-    let changedRole = await projectService.updateMemberRole(projId, uId, roleData);
+    const requesterId = req.user?.userId;
+    if (!requesterId) {
+      res.status(401).json({ success: false, message: 'Not logged in' });
+      return;
+    }
+    let changedRole = await projectService.updateMemberRole(projId, uId, roleData, requesterId);
 
     res.status(200).json({
       success: true,
