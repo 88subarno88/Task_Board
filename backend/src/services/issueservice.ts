@@ -125,7 +125,9 @@ export const moveIssue = async (issueId: string, userId: string, data: MoveIssue
     }
   }
 
-  const oldColumn = await prisma.column.findUnique({ where: { id: issue.columnId } });
+  const oldColumn = issue.columnId
+    ? await prisma.column.findUnique({ where: { id: issue.columnId } })
+    : null;
 
   await prisma.auditLog.create({
     data: {

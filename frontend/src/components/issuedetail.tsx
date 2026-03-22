@@ -1,5 +1,4 @@
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
+import RichTextEditor from "./RichTextEditot";
 import { useState, useEffect } from "react";
 import issueService from "../services/Issueservice";
 import commentService from "../services/commentservice";
@@ -264,12 +263,11 @@ export default function IssueDetail({
             <div>
               <h3 className={styles.sectionTitle}>Description</h3>
               {isEditing ? (
-                <ReactQuill
-                  value={editData.description}
-                  onChange={(val) =>
-                    setEditData({ ...editData, description: val })
+                <RichTextEditor
+                  defaultValue={editData.description}
+                  onChange={(html: string) =>
+                    setEditData({ ...editData, description: html })
                   }
-                  theme="snow"
                 />
               ) : (
                 <p className={styles.descText}>
@@ -394,11 +392,9 @@ export default function IssueDetail({
                     marginBottom: "10px",
                   }}
                 >
-                  <ReactQuill
-                    theme="snow"
-                    value={newComment}
-                    onChange={setNewComment}
+                  <RichTextEditor
                     placeholder="Add a rich text comment..."
+                    onChange={(html: string) => setNewComment(html)}
                   />
                   {/* clickable mention buttons */}
                   <div
