@@ -11,10 +11,13 @@ export const createIssue = asyncHandler(async (req: AuthRequest, res: Response) 
   }
 
   const { title, type, boardId, columnId } = req.body;
-  if (!title || !type || !boardId || !columnId) {
+  if (!title || !type || !boardId || (type !== 'STORY' && !columnId)) {
     res
       .status(400)
-      .json({ success: false, message: 'title, type, boardId and columnId are required' });
+      .json({
+        success: false,
+        message: 'title, type, boardId and columnId are required for Task/Bugs',
+      });
     return;
   }
 

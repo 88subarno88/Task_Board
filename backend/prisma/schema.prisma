@@ -120,7 +120,7 @@ model Issue {
   priority    Priority  @default(MEDIUM)
   status      String
   boardId     String
-  columnId    String
+  columnId    String?
   reporterId  String
   assigneeId  String?
   parentId    String?
@@ -131,7 +131,7 @@ model Issue {
   closedAt    DateTime?
 
   board     Board      @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  column    Column     @relation(fields: [columnId], references: [id])
+  column    Column?     @relation(fields: [columnId], references: [id])
   reporter  User       @relation("IssueReporter", fields: [reporterId], references: [id])
   assignee  User?      @relation("IssueAssignee", fields: [assigneeId], references: [id])
   parent    Issue?     @relation("IssueHierarchy", fields: [parentId], references: [id])

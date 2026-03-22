@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+import issueStyles from "../components/cssmodules/issue.module.css";
 import { useParams, useNavigate } from "react-router-dom";
 import projectService from "../services/projectservices";
 import boardService from "../services/boardservices";
 import styles from "./cssmodules/projectdetail.module.css";
+import IssueDetail from "../components/issuedetail";
+import issueService from "../services/Issueservice";
 
 type ProjectData = {
   id: string;
@@ -44,6 +49,8 @@ export default function ProjectDetail() {
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("PROJECT_MEMBER");
   const [activeTab, setActiveTab] = useState<"boards" | "stories">("boards");
+  const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
+  const [showCreateStory, setShowCreateStory] = useState(false);
 
   const loadProjectAndBoards = async () => {
     if (!projectId) return;
@@ -171,6 +178,12 @@ export default function ProjectDetail() {
         <div>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Stories</h2>
+            <button
+              onClick={() => setShowCreateStory(true)}
+              className={styles.primaryBtn}
+            >
+              + Create Story
+            </button>
           </div>
           {stories.length === 0 ? (
             <p className={styles.emptyState}>
@@ -182,7 +195,7 @@ export default function ProjectDetail() {
                 <div
                   key={story.id}
                   className={`${styles.card} ${styles.cardClickable}`}
-                  onClick={() => navigate(`/boards/${story.boardId}`)}
+                  onClick={() => setSelectedStoryId(story.id)}
                 >
                   <h3 className={styles.cardTitle}>{story.title}</h3>
                   <p className={styles.cardMeta}>Status: {story.status}</p>
@@ -234,14 +247,13 @@ export default function ProjectDetail() {
               onClick={async () => {
                 if (!newMemberEmail.trim()) return;
                 try {
-                  const userRes = await projectService.searchUserByEmail(
-                    newMemberEmail
-                  );
+                  const userRes =
+                    await projectService.searchUserByEmail(newMemberEmail);
                   const userId = userRes.data.id;
                   await projectService.addMember(
                     projectId!,
                     userId,
-                    newMemberRole
+                    newMemberRole,
                   );
                   setNewMemberEmail("");
                   setShowAddMember(false);
@@ -274,6 +286,18 @@ export default function ProjectDetail() {
         )}
       </div>
 
+      {showCreateStory && (
+        <CreateStoryForm
+          boards={boards}
+          members={members}
+          onClose={() => setShowCreateStory(false)}
+          onSuccess={() => {
+            setShowCreateStory(false);
+            loadProjectAndBoards();
+          }}
+        />
+      )}
+
       {showCreateBoard && (
         <CreateBoardForm
           projectId={projectId}
@@ -284,6 +308,243 @@ export default function ProjectDetail() {
           }}
         />
       )}
+      {selectedStoryId && projectId && (
+        <IssueDetail
+          projectId={projectId}
+          issueId={selectedStoryId}
+          onClose={() => setSelectedStoryId(null)}
+          onUpdate={() => {
+            setSelectedStoryId(null);
+            loadProjectAndBoards();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function CreateStoryForm({
+  boards,
+  members,
+  onClose,
+  onSuccess,
+}: {
+  boards: BoardSummary[];
+  members: Member[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("MEDIUM");
+  const [selectedBoardId, setSelectedBoardId] = useState(boards[0]?.id || "");
+  const [loading, setLoading] = useState(false);
+  const [assigneeId, setAssigneeId] = useState("");
+  const [dueDate, setDueDate] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBoardId)
+      return alert("You must select a target Board to store this story.");
+    const selectedBoard = boards.find((b) => b.id === selectedBoardId);
+    const fallbackColumnId = selectedBoard?.columns?.[0]?.id;
+    if (!fallbackColumnId) {
+      return alert(
+        "The selected board must have at least one column before you can create a story!",
+      );
+    }
+    setLoading(true);
+    try {
+      await issueService.createIssue({
+        title,
+        description,
+        type: "STORY",
+        priority,
+        boardId: selectedBoardId,
+        columnId: fallbackColumnId,
+        status: "To Do",
+        assigneeId: assigneeId || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      } as any);
+      onSuccess();
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Error creating Story!";
+      alert(`Backend rejected it: ${errorMessage}`);
+      console.log(err.response?.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div
+        className={styles.modalContent}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: "500px" }}
+      >
+        <h2 className={styles.modalTitle}>Create Story</h2>
+        {boards.length === 0 ? (
+          <p style={{ color: "red" }}>
+            You must create a Board first before creating Stories!
+          </p>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: "15px" }}
+          >
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  fontWeight: "500",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Title *
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className={styles.input}
+                placeholder="Enter story title"
+                autoFocus
+              />
+            </div>
+            <div style={{ display: "flex", gap: "15px" }}>
+              <div style={{ flex: 1 }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "5px",
+                    fontWeight: "500",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Priority
+                </label>
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                  className={styles.select}
+                  style={{ width: "100%" }}
+                >
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "5px",
+                    fontWeight: "500",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Target Board *
+                </label>
+                <select
+                  value={selectedBoardId}
+                  onChange={(e) => setSelectedBoardId(e.target.value)}
+                  className={styles.select}
+                  style={{ width: "100%" }}
+                  required
+                >
+                  {boards.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className={issueStyles.formGroup}>
+              <label className={issueStyles.label}>Assignee</label>
+              <select
+                className={issueStyles.input}
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+              >
+                <option value="">Unassigned</option>
+                {members.map((m) => (
+                  <option key={m.user.id} value={m.user.id}>
+                    {m.user.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={issueStyles.formGroup}>
+              <label className={issueStyles.label}>Due Date</label>
+              <input
+                type="date"
+                className={issueStyles.input}
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+            {/* <div>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "5px",
+                  fontWeight: "500",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className={styles.input}
+                style={{ minHeight: "100px", resize: "vertical" }}
+                placeholder="Add a detailed description..."
+              />
+            </div> */}
+            <div
+              className={styles.btnGroup}
+              style={{ justifyContent: "flex-end", marginTop: "10px" }}
+            >
+              <button
+                type="button"
+                onClick={onClose}
+                className={styles.btnCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className={styles.primaryBtn}
+              >
+                {loading ? "Creating..." : "Create Story"}
+              </button>
+            </div>
+
+            <div className={issueStyles.formGroup}>
+              <label className={issueStyles.label}>Description</label>
+              <div style={{ backgroundColor: "#ffffff", borderRadius: "4px" }}>
+                <ReactQuill
+                  theme="snow"
+                  value={description}
+                  onChange={setDescription}
+                  placeholder="Add a detailed description..."
+                />
+              </div>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

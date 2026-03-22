@@ -337,3 +337,49 @@
   background-color: #dc3545;
   color: white;
 }
+
+.richTextContainer {
+  margin-bottom: 1.5rem;
+  background: var(--bg-main);
+  border-radius: 6px;
+  min-height: 50px;
+}
+
+.childList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.childItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.typeBadge {
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.childTitle {
+  flex: 1;
+  font-weight: 500;
+}
+
+.childStatus {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: var(--bg-panel);
+  padding: 2px 8px;
+  border-radius: 12px;
+}

@@ -16,7 +16,7 @@ interface IssueFormProps {
 export default function IssueForm(props: IssueFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<"STORY" | "TASK" | "BUG">("TASK");
+  const [type, setType] = useState<"TASK" | "BUG">("TASK");
   const [priority, setPriority] = useState<
     "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
   >("MEDIUM");
@@ -42,7 +42,7 @@ export default function IssueForm(props: IssueFormProps) {
         const projectData = await projectService.getProject(props.projectId);
 
         // ADD THIS CONSOLE LOG:
-        console.log("🔍 PROJECT DATA FETCHED:", projectData);
+        console.log(" PROJECT DATA FETCHED:", projectData);
         const membersArray =
           projectData.data?.members ||
           projectData.data?.data?.members ||
@@ -71,10 +71,7 @@ export default function IssueForm(props: IssueFormProps) {
         columnId: props.columnId,
         assigneeId: assigneeId || undefined,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        parentId:
-          (type === "TASK" || type === "BUG") && parentId
-            ? parentId
-            : undefined,
+        parentId: parentId ? parentId : undefined,
       };
 
       await issueService.createIssue(newIssueData);
@@ -113,7 +110,6 @@ export default function IssueForm(props: IssueFormProps) {
               value={type}
               onChange={(e) => setType(e.target.value as any)}
             >
-              <option value="STORY">Story</option>
               <option value="TASK">Task</option>
               <option value="BUG">Bug</option>
             </select>

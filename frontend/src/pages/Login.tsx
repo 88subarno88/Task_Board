@@ -95,7 +95,7 @@ export default function Login() {
               </span>
             </div>
 
-            <div className={styles.row}>
+            {/* <div className={styles.row}>
               <label className={styles.remember}>
                 <input
                   type="checkbox"
@@ -104,7 +104,7 @@ export default function Login() {
                 />
                 Remember me
               </label>
-            </div>
+            </div> */}
 
             <button type="submit" className={styles.button} disabled={loading}>
               {loading ? "Signing in…" : "Sign in"}

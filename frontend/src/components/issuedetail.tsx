@@ -35,7 +35,8 @@ export default function IssueDetail({
   const [editData, setEditData] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [availableStories, setAvailableStories] = useState<any[]>([]);
-  const [timeline, setTimeline] = useState<any[]>([]); // ADD THIS STATE
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [childIssues, setChildIssues] = useState<any[]>([]);
 
   useEffect(() => {
     loadMembers();
@@ -72,9 +73,17 @@ export default function IssueDetail({
       // Filter stories for the parent dropdown
       setAvailableStories(
         boardIssuesRes.data.filter(
-          (i: any) => i.type === "STORY" && i.id !== issueId
-        )
+          (i: any) => i.type === "STORY" && i.id !== issueId,
+        ),
       );
+
+      if (currentIssue.type === "STORY") {
+        setChildIssues(
+          boardIssuesRes.data.filter(
+            (i: any) => i.parentId === currentIssue.id,
+          ),
+        );
+      }
 
       //  Set the initial state for the Edit modal
       setEditData({
@@ -92,7 +101,7 @@ export default function IssueDetail({
         ...auditRes.data.map((a: any) => ({ ...a, type: "AUDIT" })),
       ].sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
 
       setTimeline(combined);
