@@ -1,5 +1,4 @@
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
+import RichTextEditor from "./RichTextEditot";
 import { useState, useEffect } from "react";
 import issueService from "../services/Issueservice";
 import projectService from "../services/projectservices";
@@ -175,20 +174,10 @@ export default function IssueForm(props: IssueFormProps) {
 
           <div className={styles.formGroup}>
             <label className={styles.label}>Description</label>
-            <div
-              style={{
-                backgroundColor: "#ffffff",
-                color: "#000000",
-                borderRadius: "4px",
-              }}
-            >
-              <ReactQuill
-                theme="snow"
-                value={description}
-                onChange={setDescription}
-                placeholder="Add a detailed description..."
-              />
-            </div>
+            <RichTextEditor
+              placeholder="Add a detailed description..."
+              onChange={(html: string) => setDescription(html)}
+            />
           </div>
           <div className={styles.buttonGroup}>
             <button
