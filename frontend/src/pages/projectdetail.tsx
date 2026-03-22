@@ -8,6 +8,7 @@ import boardService from "../services/boardservices";
 import styles from "./cssmodules/projectdetail.module.css";
 import IssueDetail from "../components/issuedetail";
 import issueService from "../services/Issueservice";
+import { useAuth } from "../context/AuthContext";
 
 type ProjectData = {
   id: string;
@@ -36,6 +37,7 @@ type CreateBoardFormProps = {
 export default function ProjectDetail() {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [boards, setBoards] = useState<BoardSummary[]>([]);
@@ -51,6 +53,14 @@ export default function ProjectDetail() {
   const [activeTab, setActiveTab] = useState<"boards" | "stories">("boards");
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [showCreateStory, setShowCreateStory] = useState(false);
+
+  const isGlobalAdmin = user?.globalRole === "GLOBAL_ADMIN";
+  const myMembership = members.find((m) => m.user.id === user?.id);
+  const projectRole = myMembership?.role;
+
+  const canManageProject = isGlobalAdmin || projectRole === "PROJECT_ADMIN";
+  const canModifyContent = canManageProject || projectRole === "PROJECT_MEMBER";
+  const isReadOnly = !isGlobalAdmin && projectRole === "PROJECT_VIEWER";
 
   const loadProjectAndBoards = async () => {
     if (!projectId) return;
@@ -74,7 +84,24 @@ export default function ProjectDetail() {
       setLoading(false);
     }
   };
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    try {
+      await projectService.updateMemberRole(projectId!, userId, newRole);
+      loadProjectAndBoards();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to update role");
+    }
+  };
 
+  const handleRemoveMember = async (userId: string) => {
+    if (!confirm("Are you sure you want to remove this member?")) return;
+    try {
+      await projectService.removeMember(projectId!, userId);
+      loadProjectAndBoards();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to remove member");
+    }
+  };
   useEffect(() => {
     loadProjectAndBoards();
   }, [projectId]);
@@ -146,12 +173,14 @@ export default function ProjectDetail() {
         <div>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Boards</h2>
-            <button
-              onClick={() => setShowCreateBoard(true)}
-              className={styles.primaryBtn}
-            >
-              + Create Board
-            </button>
+            {canManageProject && (
+              <button
+                onClick={() => setShowCreateBoard(true)}
+                className={styles.primaryBtn}
+              >
+                + Create Board
+              </button>
+            )}
           </div>
           {boards.length === 0 ? (
             <p className={styles.emptyState}>No boards yet. Create one!</p>
@@ -178,12 +207,14 @@ export default function ProjectDetail() {
         <div>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Stories</h2>
-            <button
-              onClick={() => setShowCreateStory(true)}
-              className={styles.primaryBtn}
-            >
-              + Create Story
-            </button>
+            {canModifyContent && (
+              <button
+                onClick={() => setShowCreateStory(true)}
+                className={styles.primaryBtn}
+              >
+                + Create Story
+              </button>
+            )}
           </div>
           {stories.length === 0 ? (
             <p className={styles.emptyState}>
@@ -205,8 +236,20 @@ export default function ProjectDetail() {
                       Assignee: {story.assignee.name}
                     </p>
                   )}
+                  {story.dueDate && (
+                    <p className={styles.cardMeta}>
+                      Due: {new Date(story.dueDate).toLocaleDateString()}
+                    </p>
+                  )}
+                  <p className={styles.cardMeta}>
+                    Created: {new Date(story.createdAt).toLocaleDateString()}
+                  </p>
                   <span className={styles.roleTag}>
-                    {story.children?.length || 0} tasks
+                    {(story.children?.length || 0) > 0 && (
+                      <span className={styles.roleTag}>
+                        {story.children.length} tasks
+                      </span>
+                    )}
                   </span>
                 </div>
               ))}
@@ -217,15 +260,17 @@ export default function ProjectDetail() {
       <div>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Members</h2>
-          <button
-            onClick={() => setShowAddMember(!showAddMember)}
-            className={styles.primaryBtn}
-          >
-            {showAddMember ? "Close" : "+ Add Member"}
-          </button>
+          {canManageProject && (
+            <button
+              onClick={() => setShowAddMember(!showAddMember)}
+              className={styles.primaryBtn}
+            >
+              {showAddMember ? "Close" : "+ Add Member"}
+            </button>
+          )}
         </div>
 
-        {showAddMember && (
+        {showAddMember && canManageProject && (
           <div className={styles.addMemberBox}>
             <input
               type="text"
@@ -277,6 +322,54 @@ export default function ProjectDetail() {
               <div key={member.id} className={styles.card}>
                 <h3 className={styles.cardTitle}>{member.user.name}</h3>
                 <p className={styles.cardMeta}>{member.user.email}</p>
+                {canManageProject && member.user.id !== user?.id ? (
+                  <div
+                    style={{
+                      marginTop: "15px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <select
+                      value={member.role}
+                      onChange={(e) =>
+                        handleUpdateRole(member.user.id, e.target.value)
+                      }
+                      className={styles.select}
+                      style={{
+                        padding: "4px 8px",
+                        fontSize: "12px",
+                        width: "auto",
+                      }}
+                    >
+                      <option value="PROJECT_ADMIN">Admin</option>
+                      <option value="PROJECT_MEMBER">Member</option>
+                      <option value="PROJECT_VIEWER">Viewer</option>
+                    </select>
+
+                    <button
+                      onClick={() => handleRemoveMember(member.user.id)}
+                      style={{
+                        color: "#dc3545",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <span
+                    className={styles.roleTag}
+                    style={{ marginTop: "10px", display: "inline-block" }}
+                  >
+                    {member.role.replace("PROJECT_", "")}
+                  </span>
+                )}
                 <span className={styles.roleTag}>
                   {member.role.replace("PROJECT_", "")}
                 </span>
@@ -312,6 +405,7 @@ export default function ProjectDetail() {
         <IssueDetail
           projectId={projectId}
           issueId={selectedStoryId}
+          isReadOnly={isReadOnly}
           onClose={() => setSelectedStoryId(null)}
           onUpdate={() => {
             setSelectedStoryId(null);

@@ -17,7 +17,10 @@ export const createBoard = asyncHandler(async (req: Request, res: Response) => {
 
 // get all boards belonging to a project
 export const getBoardsByProject = asyncHandler(async (req: Request, res: Response) => {
-  const projectId = req.query.projectId as string;
+  const projectId =
+    req.query.projectId || req.params.projectId || (req.body ? req.body.projectId : undefined);
+  // ✨ ADD THIS LOG:
+  console.log('👉 CONTROLLER CHECK: projectId made it to the controller! It is:', projectId);
 
   if (!projectId) {
     res.status(400).json({ success: false, message: 'projectId query param is required' });

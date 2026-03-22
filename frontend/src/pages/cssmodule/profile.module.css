@@ -1,0 +1,150 @@
+.container {
+  max-width: 900px;
+  width: 90%;
+  margin: 60px auto;
+  padding: 50px 80px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.title {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  margin-bottom: 40px;
+  font-weight: 700;
+}
+
+.avatarSection {
+  margin-bottom: 40px;
+}
+
+.avatarCircle {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  border: 4px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.avatarCircle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  font-size: 6rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.uploadBtn {
+  font-size: 1.1rem;
+  padding: 12px 24px;
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.uploadBtn:hover {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+.saveBtn {
+  font-size: 1.25rem;
+  padding: 16px 32px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: 600;
+  margin-top: 30px;
+  transition: background-color 0.2s ease;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background-color: #4338ca;
+}
+
+.saveBtn:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+.formGroup {
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+}
+
+.input {
+  width: 100%;
+  font-size: 1.15rem;
+  padding: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #111827;
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+.inputDisabled {
+  background-color: #f9fafb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.hint {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-top: 15px;
+}
+
+.message {
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 30px;
+}
+
+.success {
+  background-color: #def7ec;
+  color: #03543f;
+  border: 1px solid #31c48d;
+}
+
+.error {
+  background-color: #fde8e8;
+  color: #9b1c1c;
+  border: 1px solid #f8b4b4;
+}

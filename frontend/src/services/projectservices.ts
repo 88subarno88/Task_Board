@@ -52,6 +52,23 @@ const projectService = {
     const { data } = await api.get(`/users/search?email=${email}`);
     return data;
   },
+  updateMemberRole: async (
+    projectId: string,
+    userId: string,
+    newRole: string,
+  ) => {
+    const response = await api.put(`/projects/${projectId}/members/${userId}`, {
+      role: newRole,
+    });
+    return response.data;
+  },
+
+  removeMember: async (projectId: string, userId: string) => {
+    const response = await api.delete(
+      `/projects/${projectId}/members/${userId}`,
+    );
+    return response.data;
+  },
 };
 
 export default projectService;

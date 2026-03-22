@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import boardService from "../services/boardservices";
 import issueService from "../services/Issueservice";
 import IssueForm from "../components/Issue";
+import projectService from "../services/projectservices";
 import IssueDetail from "../components/issuedetail";
 import { useAuth } from "../context/AuthContext";
 import styles from "./cssmodules/board.module.css";
@@ -31,10 +32,22 @@ type BoardData = {
 };
 
 export default function BoardView() {
+  const { user } = useAuth();
   const { boardId } = useParams();
   const navigate = useNavigate();
-
+  // 2. Then, define your permission variables using that user
   const [board, setBoard] = useState<BoardData | null>(null);
+  const [members, setMembers] = useState<any[]>([]);
+
+  // --- PERMISSIONS LOGIC ---
+  const isGlobalAdmin = user?.globalRole === "GLOBAL_ADMIN";
+  const myMembership = members.find((m) => m.user.id === user?.id);
+  const projectRole = myMembership?.role;
+
+  const canManageBoard = isGlobalAdmin || projectRole === "PROJECT_ADMIN";
+  const canEditIssues = canManageBoard || projectRole === "PROJECT_MEMBER";
+  const isReadOnly = !isGlobalAdmin && projectRole === "PROJECT_VIEWER";
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [draggedIssue, setDraggedIssue] = useState<Issue | null>(null);
@@ -42,6 +55,7 @@ export default function BoardView() {
   const [showCreateIssue, setShowCreateIssue] = useState<string | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [movingIssue, setMovingIssue] = useState(false);
+
   const [wipModal, setWipModal] = useState<{
     id: string;
     name: string;
@@ -49,8 +63,7 @@ export default function BoardView() {
   } | null>(null);
   const [wipInput, setWipInput] = useState("");
   const [savingWip, setSavingWip] = useState(false);
-  const { user } = useAuth();
-  const isAdmin = user?.globalRole === "GLOBAL_ADMIN";
+  // const isAdmin = user?.globalRole === "GLOBAL_ADMIN";
 
   const loadBoard = async () => {
     if (!boardId) return;
@@ -59,6 +72,10 @@ export default function BoardView() {
       const response = await boardService.getBoardWithIssues(boardId);
       const boardData = response.data ? response.data : response;
       setBoard(boardData);
+      if (boardData.projectId) {
+        const membersRes = await projectService.getMembers(boardData.projectId);
+        setMembers(membersRes.data || membersRes);
+      }
     } catch (err) {
       setError("Failed to load board... check console");
       console.error(err);
@@ -137,7 +154,7 @@ export default function BoardView() {
   };
 
   const handleSaveWip = async () => {
-    if (!wipModal || !isAdmin) return;
+    if (!wipModal || !canManageBoard) return;
 
     const newLimit = wipInput.trim() === "" ? null : parseInt(wipInput, 10);
 
@@ -224,7 +241,43 @@ export default function BoardView() {
         <button onClick={() => navigate(-1)} className={styles.backBtn}>
           ← Go Back
         </button>
-        <h1 className={styles.boardTitle}>{board.name}</h1>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <h1 className={styles.boardTitle} style={{ margin: 0 }}>
+            {board.name}
+          </h1>
+          <div style={{ display: "flex", gap: "8px" }}>
+            {isReadOnly && (
+              <span
+                className={styles.roleTag}
+                style={{
+                  backgroundColor: "#fff3cd",
+                  color: "#856404",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  fontSize: "0.8rem",
+                  border: "1px solid #ffeeba",
+                }}
+              >
+                View Only
+              </span>
+            )}
+            {isGlobalAdmin && (
+              <span
+                className={styles.roleTag}
+                style={{
+                  backgroundColor: "#d4edda",
+                  color: "#155724",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  fontSize: "0.8rem",
+                  border: "1px solid #c3e6cb",
+                }}
+              >
+                Global Admin
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className={styles.columnsWrapper}>
@@ -232,9 +285,9 @@ export default function BoardView() {
           board.columns.map((column) => (
             <div
               key={column.id}
-              onDragOver={(e) => handleDragOver(e, column.id)}
+              onDragOver={(e) => !isReadOnly && handleDragOver(e, column.id)}
               onDragLeave={() => setDragOverColumn(null)}
-              onDrop={(e) => handleDrop(e, column.id)}
+              onDrop={(e) => !isReadOnly && handleDrop(e, column.id)}
               className={`${styles.column} ${dragOverColumn === column.id ? styles.columnDragOver : ""}`}
             >
               <div className={styles.columnHeader}>
@@ -244,7 +297,7 @@ export default function BoardView() {
                     {column.issues ? column.issues.length : 0}
                     {column.wipLimit != null ? ` / ${column.wipLimit}` : ""}
                   </span>
-                  {isAdmin && (
+                  {canManageBoard && (
                     <button
                       onClick={() =>
                         openWipModal(column.id, column.wipLimit, column.name)
@@ -255,13 +308,15 @@ export default function BoardView() {
                       ✏️
                     </button>
                   )}
-                  <button
-                    onClick={() => setShowCreateIssue(column.id)}
-                    className={styles.addBtn}
-                    title="Add issue"
-                  >
-                    +
-                  </button>
+                  {canEditIssues && (
+                    <button
+                      onClick={() => setShowCreateIssue(column.id)}
+                      className={styles.addBtn}
+                      title="Add issue"
+                    >
+                      +
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -270,8 +325,10 @@ export default function BoardView() {
                   column.issues.map((issue) => (
                     <div
                       key={issue.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, issue, column.id)}
+                      draggable={!isReadOnly}
+                      onDragStart={(e) =>
+                        !isReadOnly && handleDragStart(e, issue, column.id)
+                      }
                       onDragEnd={handleDragEnd}
                       onClick={() => {
                         if (draggedIssue === null) setSelectedIssue(issue.id);
@@ -279,6 +336,7 @@ export default function BoardView() {
                       className={styles.issueCard}
                       style={{
                         borderLeftColor: getPriorityColor(issue.priority),
+                        cursor: isReadOnly ? "pointer" : "grab",
                       }}
                     >
                       <div className={styles.issueType}>
@@ -331,6 +389,7 @@ export default function BoardView() {
         <IssueDetail
           projectId={board.projectId}
           issueId={selectedIssue}
+          isReadOnly={isReadOnly}
           onClose={() => setSelectedIssue(null)}
           onUpdate={() => {
             setSelectedIssue(null);

@@ -14,6 +14,7 @@ interface IssueDetailProps {
   issueId: string;
   onClose: () => void;
   onUpdate: () => void;
+  isReadOnly?: boolean;
 }
 
 export default function IssueDetail({
@@ -21,6 +22,7 @@ export default function IssueDetail({
   issueId,
   onClose,
   onUpdate,
+  isReadOnly = false,
 }: IssueDetailProps) {
   const { user } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
@@ -205,30 +207,31 @@ export default function IssueDetail({
           </div>
 
           <div className={styles.headerActions}>
-            {isEditing ? (
-              <>
+            {!isReadOnly &&
+              (isEditing ? (
+                <>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className={styles.btnSecondary}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={saving}
+                    className={styles.btnPrimary}
+                  >
+                    {saving ? "Saving..." : "Save"}
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => setIsEditing(true)}
                   className={styles.btnSecondary}
                 >
-                  Cancel
+                  Edit Issue
                 </button>
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={saving}
-                  className={styles.btnPrimary}
-                >
-                  {saving ? "Saving..." : "Save"}
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className={styles.btnSecondary}
-              >
-                Edit Issue
-              </button>
-            )}
+              ))}
             <button onClick={onClose} className={styles.closeBtn}>
               ×
             </button>
@@ -237,6 +240,25 @@ export default function IssueDetail({
         {/* Content - Scrollable */}
         {/* Content - Scrollable */}
         <div className={styles.contentScroll}>
+          {isReadOnly && (
+            <div
+              style={{
+                backgroundColor: "#fff3cd",
+                color: "#856404",
+                padding: "8px 15px",
+                borderRadius: "4px",
+                marginBottom: "15px",
+                fontSize: "0.9rem",
+                border: "1px solid #ffeeba",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              👁️ <strong>Notice:</strong> You are viewing this issue in
+              Read-Only mode.
+            </div>
+          )}
           <div className={styles.mainGrid}>
             {/* LEFT: Description */}
             <div>
@@ -274,6 +296,7 @@ export default function IssueDetail({
                     handleInlineUpdate("assigneeId", e.target.value)
                   }
                   className={styles.selectInput}
+                  disabled={isReadOnly}
                 >
                   <option value="">Unassigned</option>
                   {projectMembers.map((m) => (
@@ -293,6 +316,7 @@ export default function IssueDetail({
                     handleInlineUpdate("priority", e.target.value)
                   }
                   className={styles.selectInput}
+                  disabled={isReadOnly}
                 >
                   <option value="LOW">Low</option>
                   <option value="MEDIUM">Medium</option>
@@ -311,6 +335,7 @@ export default function IssueDetail({
                       handleInlineUpdate("parentId", e.target.value)
                     }
                     className={styles.selectInput}
+                    disabled={isReadOnly}
                   >
                     <option value="">No Parent (Independent)</option>
                     {availableStories.map((story) => (
@@ -332,6 +357,7 @@ export default function IssueDetail({
                   onChange={(e) =>
                     handleInlineUpdate("dueDate", e.target.value)
                   }
+                  disabled={isReadOnly}
                 />
               </div>
 
@@ -359,79 +385,80 @@ export default function IssueDetail({
               Activity Timeline (
               {timeline.filter((t) => t.type === "COMMENT").length} Comments)
             </h3>
-
-            <form onSubmit={handleAddComment} className={styles.commentForm}>
-              <div
-                style={{
-                  backgroundColor: "var(--bg-main)",
-                  color: "var(--text-primary)",
-                  marginBottom: "10px",
-                }}
-              >
-                <ReactQuill
-                  theme="snow"
-                  value={newComment}
-                  onChange={setNewComment}
-                  placeholder="Add a rich text comment..."
-                />
-                {/* clickable mention buttons */}
+            {!isReadOnly && (
+              <form onSubmit={handleAddComment} className={styles.commentForm}>
                 <div
                   style={{
-                    margin: "6px 0",
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "6px",
-                    alignItems: "center",
+                    backgroundColor: "var(--bg-main)",
+                    color: "var(--text-primary)",
+                    marginBottom: "10px",
                   }}
                 >
-                  <span style={{ fontSize: "12px", color: "#888" }}>
-                    Mention:
-                  </span>
-                  {projectMembers.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() =>
-                        setNewComment((prev) => prev + `@${m.email} `)
-                      }
-                      style={{
-                        fontSize: "11px",
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        border: "1px solid #ddd",
-                        backgroundColor: "#f5f5f5",
-                        cursor: "pointer",
-                        color: "#333",
-                      }}
-                    >
-                      @{m.name}
-                    </button>
-                  ))}
-                </div>
+                  <ReactQuill
+                    theme="snow"
+                    value={newComment}
+                    onChange={setNewComment}
+                    placeholder="Add a rich text comment..."
+                  />
+                  {/* clickable mention buttons */}
+                  <div
+                    style={{
+                      margin: "6px 0",
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "6px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span style={{ fontSize: "12px", color: "#888" }}>
+                      Mention:
+                    </span>
+                    {projectMembers.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() =>
+                          setNewComment((prev) => prev + `@${m.email} `)
+                        }
+                        style={{
+                          fontSize: "11px",
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          border: "1px solid #ddd",
+                          backgroundColor: "#f5f5f5",
+                          cursor: "pointer",
+                          color: "#333",
+                        }}
+                      >
+                        @{m.name}
+                      </button>
+                    ))}
+                  </div>
 
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: "#888",
-                    margin: "4px 0 8px",
-                  }}
-                >
-                  💡 Use @email to mention someone (e.g. @rohit@test.com)
-                </p>
-              </div>
-              <div className={styles.commentActions}>
-                <button
-                  type="submit"
-                  disabled={
-                    addingComment ||
-                    newComment.replace(/<[^>]*>/g, "").trim() === ""
-                  }
-                  className={styles.btnPrimary}
-                >
-                  {addingComment ? "Adding..." : "Add Comment"}
-                </button>
-              </div>
-            </form>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "#888",
+                      margin: "4px 0 8px",
+                    }}
+                  >
+                    Use @email to mention someone (e.g. @rohit@test.com)
+                  </p>
+                </div>
+                <div className={styles.commentActions}>
+                  <button
+                    type="submit"
+                    disabled={
+                      addingComment ||
+                      newComment.replace(/<[^>]*>/g, "").trim() === ""
+                    }
+                    className={styles.btnPrimary}
+                  >
+                    {addingComment ? "Adding..." : "Add Comment"}
+                  </button>
+                </div>
+              </form>
+            )}
 
             <div className={styles.commentList}>
               {timeline.length === 0 ? (
@@ -453,7 +480,7 @@ export default function IssueDetail({
                               {new Date(item.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          {item.userId === user?.id && (
+                          {item.userId === user?.id && !isReadOnly && (
                             <button
                               onClick={() => handleDeleteComment(item.id)}
                               className={styles.btnDangerText}
@@ -531,9 +558,11 @@ export default function IssueDetail({
         {/* Closes contentScroll */}
         {/* Footer */}
         <div className={styles.footer}>
-          <button onClick={handleDelete} className={styles.btnDangerOutline}>
-            Delete Issue
-          </button>
+          {!isReadOnly && (
+            <button onClick={handleDelete} className={styles.btnDangerOutline}>
+              Delete Issue
+            </button>
+          )}
         </div>
       </div>{" "}
       {/* Closes modal */}

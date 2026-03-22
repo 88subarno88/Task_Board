@@ -5,7 +5,7 @@ export interface User {
     id: string
     name: string
     email: string
-    globalRole: string
+    globalRole: 'GLOBAL_ADMIN' | 'USER';
     avatarUrl?: string  // optional, not everyone has one
   }
   

@@ -47,7 +47,9 @@ export const requireProjectadmin = async (req: Request, res: Response, next: Nex
     if (user.globalRole == 'GLOBAL_ADMIN') {
       next();
     } else {
-      let projectId: string | undefined = req.params.projectId as string | undefined;
+      let projectId: string | undefined = (req.params.projectId ||
+        req.query.projectId ||
+        req.body.projectId) as string | undefined;
       if (projectId != undefined) {
         try {
           let membership = await prisma.projectMember.findUnique({
@@ -95,7 +97,7 @@ export const requireProjectmember = async (req: Request, res: Response, next: Ne
     if (user.globalRole == 'GLOBAL_ADMIN') {
       next();
     } else {
-      let projectId: string | undefined = req.params.projectId as string | undefined;
+      const projectId = (req.query.projectId || req.params.projectId) as string;
 
       if (projectId != undefined) {
         try {
@@ -145,7 +147,9 @@ export const requireProjectviewer = async (req: Request, res: Response, next: Ne
     if (user.globalRole == 'GLOBAL_ADMIN') {
       next();
     } else {
-      let projectId: string | undefined = req.params.projectId as string | undefined;
+      let projectId: string | undefined = (req.params.projectId ||
+        req.query.projectId ||
+        req.body.projectId) as string | undefined;
 
       if (projectId != undefined) {
         try {
